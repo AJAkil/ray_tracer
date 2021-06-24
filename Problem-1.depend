@@ -237,18 +237,11 @@
 	<stddef.h>
 	<GL/gl.h>
 
-1624488812 source:e:\academics\4-1\lab\graphics\ray-tracing\problem-1\main.cpp
-	<stdio.h>
-	<stdlib.h>
-	<math.h>
-	<iostream>
-	<string>
-	<vector>
+1624564250 source:e:\academics\4-1\lab\graphics\ray-tracing\problem-1\main.cpp
 	"1605079_HEADER.h"
-	<windows.h>
-	<GL/glut.h>
+	"bitmap_image.hpp"
 
-1624487991 e:\academics\4-1\lab\graphics\ray-tracing\problem-1\1605079_header.h
+1624562907 e:\academics\4-1\lab\graphics\ray-tracing\problem-1\1605079_header.h
 	<iostream>
 	<fstream>
 	<stack>
@@ -263,4 +256,14 @@
 	<iomanip>
 	<windows.h>
 	<GL/glut.h>
+
+1492200750 e:\academics\4-1\lab\graphics\ray-tracing\problem-1\bitmap_image.hpp
+	<algorithm>
+	<cmath>
+	<cstdlib>
+	<fstream>
+	<iostream>
+	<iterator>
+	<limits>
+	<string>
 

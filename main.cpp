@@ -1,13 +1,6 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<math.h>
-#include<iostream>
-#include<string>
-#include<vector>
 #include "1605079_HEADER.h"
+#include "bitmap_image.hpp"
 
-#include <windows.h>
-#include <GL/glut.h>
 
 using namespace std;
 
@@ -54,7 +47,7 @@ struct point {
 };
 
 Vector3D pos = {100, 100, 0};
-Vector3D u = {0, 0, 1};
+Vector3D u = {0, 0, -1};
 Vector3D l = {-1 / sqrt(2), -1 / sqrt(2), 0};
 Vector3D r = {-1 / sqrt(2), 1 / sqrt(2), 0};
 double k = 2;
@@ -63,7 +56,9 @@ vector<string> fileLines;
 vector<Object *> objects;
 vector<Light> lights;
 double recursion_level, image_width, image_height;
+double windowHeight = 500, windowWidth = 500;
 int num_objects, num_light_sources;
+double view_angle = 80;
 
 vector<string> tokenizeString(string s) {
     vector<string> tokens;
@@ -155,12 +150,15 @@ void drawAxes() {
         glColor3f(1.0, 1.0, 1.0);
         glBegin(GL_LINES);
         {
+            glColor3f(1.0, 0, 0);
             glVertex3f(1500, 0, 0);
             glVertex3f(-1500, 0, 0);
 
+            glColor3f(0, 1.0, 0);
             glVertex3f(0, -1500, 0);
             glVertex3f(0, 1500, 0);
 
+            glColor3f(0, 0, 1.0);
             glVertex3f(0, 0, 1500);
             glVertex3f(0, 0, -1500);
         }
@@ -322,6 +320,90 @@ void drawUpperSphere(double radius, int slices, int stacks, double shiftBy) {
     }
 }
 
+void capture(){
+
+    bitmap_image image((int) image_width, (int) image_height);
+
+    // setting up the image
+    cout<<"calling capture"<<endl;
+    for (int i = 0; i < image_width; i++) {
+        for (int j = 0; j < image_height; j++) {
+            image.set_pixel(i, j, 0, 0, 0);
+        }
+    }
+
+
+    double planeDistance = (windowHeight/2.0)/tan(convertDegreeToRadian(view_angle)/2.0);
+    Vector3D topleft = pos + l*planeDistance - r*(windowWidth/2) + u*(windowHeight/2);
+    double du = windowWidth/image_width;
+    double dv = windowHeight/image_height;
+
+    cout<<planeDistance<<" "<<du<<" "<<dv<<endl;
+    printVector3D(topleft);
+
+    // Choose middle of the grid cell
+    topleft = topleft + r*(0.5*du) - u*(0.5*dv);
+    printVector3D(topleft);
+    // the index of the nearest objectdummy_color
+    int nearest;
+    double t_min=100000, t;
+
+    for(int i = 0; i<image_width;i++){
+        for(int j=0;j<image_height;j++){
+
+                // calculate current pixel vector/point
+                Vector3D currentPixel = topleft + r*(i*du) - u*(j*dv);
+                //printVector3D(currentPixel);
+                Vector3D R_d = {currentPixel.x - pos.x, currentPixel.y - pos.y, currentPixel.z - pos.z};
+                //printVector3D(R_d);
+                // create ray object
+                //Ray* r = new Ray(pos, R_d);
+                //double*  color = new double[3];
+                Ray r(pos, R_d);
+                vector<double> dummy_color;
+                dummy_color.push_back(0);
+                dummy_color.push_back(0);
+                dummy_color.push_back(0);
+                //cout<<getVectorMagnitude(r.dir);
+                // iterating over the objects
+                for(int k = 0; k < objects.size(); k++){
+                    //cout<<"for pixel i and j" << i << " " << j<<endl;
+                    t = objects[k]->intersect(r, dummy_color, 0);
+                    //if(k == 1 && t!=-1)
+                        //cout<<"obj = "<<k<<" t = "<<t<<" t_min = "<<t_min<<endl;
+                    ////cout<<"here"<<t<<endl;
+                    if(t_min > t && t!=-1){
+                        nearest = k; //storing the index of the nearest object
+                        t_min = t;
+                        //cout<<"storing "<<k<<endl;
+                    }
+                }
+
+                // we again call intersect to set the color
+                //if(nearest == 1) cout<<"yes"<<endl;
+                vector<double>color;
+                color.push_back(0);
+                color.push_back(0);
+                color.push_back(0);
+                t = objects[nearest]->intersect(r, color, 1);
+                 //cout<<"hersssasasae"<<endl;
+                // we set image pixel here
+                //if(color[2] !=0) cout<<"here the color is : "<<color[1]<<endl;
+                //cout<<color[0]<<color[1]<<color[2]<<endl;
+                image.set_pixel(j,i,color[0]*255, color[1]*255, color[2]*255);
+                color.clear();
+                dummy_color.clear();
+                //color[0] = 0;
+                //color[1] = 0;
+                //color[2] = 0;
+
+        }
+    }
+
+    // ,cout<<"generating image"<<endl;
+    image.save_image("E:\\ACADEMICS\\4-1\\Lab\\Graphics\\Ray-Tracing\\Problem-1\\test_akil.bmp");
+}
+
 void drawLowerSphere(double radius, int slices, int stacks, double shiftBy) {
     struct point points[100][100];
     int i, j;
@@ -360,6 +442,9 @@ void keyboardListener(unsigned char key, int x, int y) {
 
     switch (key) {
 
+        case '0':
+            capture();
+            break;
         case '1':
             camLookLr(1);
             break;
@@ -521,7 +606,7 @@ void drawBulletsOnPlane() {
 
 void loadData() {
     cout << "out" << endl;
-    readFile("E:\\ACADEMICS\\4-1\\Lab\\Graphics\\Ray-Tracing\\Problem-1\\scene.txt");
+    readFile("E:\\ACADEMICS\\4-1\\Lab\\Graphics\\Ray-Tracing\\Problem-1\\scene_test.txt");
 
     // Reading in the data
     vector<string> lines;
@@ -669,7 +754,7 @@ void loadData() {
     }
 
     // code for creating the floor object
-    Object *temp;
+    /*Object *temp;
     temp = new Floor(1000, 20); // you can change these values
 
     // Setting the color
@@ -677,7 +762,7 @@ void loadData() {
     temp->setCoEfficients(0.4, 0.2, 0.1, 0.3);
     temp->setShine(5);
 
-    objects.push_back(temp);
+    objects.push_back(temp);*/
 
     cout << objects.size() << endl;
 
@@ -728,7 +813,11 @@ void display() {
     drawAxes();
     drawGrid();
 
-    glRotatef(90, 1, 0, 0);
+    for(int i = 0;i<objects.size();i++){
+        objects[i]->draw();
+    }
+
+    /*glRotatef(90, 1, 0, 0);
 
     // draw plane
     glPushMatrix();
@@ -756,7 +845,7 @@ void display() {
     // shifting the axis by -30 along the z-axis
     glTranslatef(0, 0, -centerSphereRadius); // 30
 
-    glRotatef(barrelRotateVerticallyBy, 1, 0, 0); //a-s rotation
+    glRotatef(barrelRotatpos.x, pos.y, pos.z, pos.x + l.x, pos.y + l.y, pos.z + l.z, u.x, u.y, u.zeVerticallyBy, 1, 0, 0); //a-s rotation
 
     glRotatef(barrelRotateAlongOwnAxisBy, 0, 0, 1); // d-f rotation
 
@@ -764,7 +853,7 @@ void display() {
     drawUpperSphere(gunSphereRadius, 50, 30, -gunSphereRadius);
 
     // cylinder and funnel functions
-    glTranslatef(0, 0, -(cylinderHeight + gunSphereRadius));
+    glTranslatef(0, 0, -(cylinderHeight + gunSphereRadius));*/
 
 
     //ADD this line in the end --- if you use double buffer (i.e. GL_DOUBLE)
@@ -786,7 +875,7 @@ void init() {
     //clear the screen
     glClearColor(0, 0, 0, 0);
 
-    /******    loadData();******************
+    /************************
     / set-up projection here
     ************************/
     //load the PROJECTION matrix
@@ -795,8 +884,8 @@ void init() {
     //initialize the matrix
     glLoadIdentity();
 
-    //give PERSPECTIVE parameters
     gluPerspective(80, 1, 1, 1000.0);
+    //give PERSPECTIVE parameters
     //field of view in the Y (vertically)
     //aspect ratio that determines the field of view in the X direction (horizontally)
     //near distance
@@ -806,7 +895,7 @@ void init() {
 int main(int argc, char **argv) {
     loadData();
     glutInit(&argc, argv);
-    glutInitWindowSize(500, 500);
+    glutInitWindowSize(windowHeight, windowWidth);
     glutInitWindowPosition(0, 0);
     glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGB);    //Depth, Double buffer, RGB color
 

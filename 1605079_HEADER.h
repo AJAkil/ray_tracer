@@ -119,7 +119,7 @@ public:
         coefficients[3] = recur_reflect;
     }
 
-    virtual double intersect(Ray *r, double *color, int level) {
+    virtual double intersect(Ray& r, vector<double>&final_color, int level) {
         return -1.0;
     }
 
@@ -137,7 +137,115 @@ public:
     }
 
     void draw() {
+    int slices = 50;
+    int stacks = 30;
+    Vector3D points[100][100];
+    int i, j;
+    double h, r;
+    //printVector3D(reference_point);
+    //generate points
+    for (i = 0; i <= stacks; i++) {
+        h = length * sin(((double) i / (double) stacks) * (pi / 2));
+        r = length * cos(((double) i / (double) stacks) * (pi / 2));
+        for (j = 0; j <= slices; j++) {
+            points[i][j].x = r * cos(((double) j / (double) slices) * 2 * pi);
+            points[i][j].y = r * sin(((double) j / (double) slices) * 2 * pi);
+            points[i][j].z = h;
+        }
+    }
 
+    glRotatef(90, 0, 1, 0);
+
+    //glTranslatef(reference_point.x, reference_point.y, reference_point.z)
+    //draw quads using generated points
+    for (i = 0; i < stacks; i++) {
+
+        for (j = 0; j < slices; j++) {
+            glColor3f(color[0], color[1], color[2]);
+            glBegin(GL_QUADS);
+            {
+                //lower hemisphere
+                glVertex3f(points[i][j].x + reference_point.x, points[i][j].y + reference_point.y, -points[i][j].z + reference_point.z);
+                glVertex3f(points[i][j + 1].x + reference_point.x, points[i][j + 1].y + reference_point.y, -points[i][j + 1].z + reference_point.z);
+                glVertex3f(points[i + 1][j + 1].x + reference_point.x, points[i + 1][j + 1].y + reference_point.y, -points[i + 1][j + 1].z + reference_point.z);
+                glVertex3f(points[i + 1][j].x + reference_point.x, points[i + 1][j].y + reference_point.y, -points[i + 1][j].z + reference_point.z);
+            }
+            glEnd();
+        }
+    }
+
+    for (i = 0; i < stacks; i++) {
+        for (j = 0; j < slices; j++) {
+            glColor3f(color[0], color[1], color[2]);
+            glBegin(GL_QUADS);
+            {
+                //upper hemisphere
+                glVertex3f(points[i][j].x + reference_point.x, points[i][j].y + reference_point.y, points[i][j].z + reference_point.z);
+                glVertex3f(points[i][j + 1].x +reference_point.x, points[i][j + 1].y + reference_point.y, points[i][j + 1].z + reference_point.z);
+                glVertex3f(points[i + 1][j + 1].x + reference_point.x, points[i + 1][j + 1].y + reference_point.y, points[i + 1][j + 1].z +  reference_point.z);
+                glVertex3f(points[i + 1][j].x + reference_point.x, points[i + 1][j].y + reference_point.y, points[i + 1][j].z + reference_point.z);
+            }
+            glEnd();
+        }
+    }
+    }
+    virtual double intersect(Ray& r, vector<double>&final_color, int level) {
+
+        //printVector3D(r.dir);
+        Vector3D R_start = {r.start.x - reference_point.x, r.start.y - reference_point.y, r.start.z - reference_point.z};
+        //cout<<"R_START "<<endl;
+        //printVector3D(R_start);
+        //cout<<"R_DIR "<<endl;
+        //printVector3D(r.dir);
+        double a = 1;
+        double b = 2 * getDotProduct(r.dir, R_start);
+        //cout<<"b "<<b<<endl;
+        double c = getDotProduct(R_start, R_start) - length*length;
+        //cout<<"c "<<c<<endl;
+
+        double temp = b*b - 4 * a * c;
+
+        if(temp<0) {
+            //cout<<"d<0"<<endl;
+            return -1.0;
+        }
+
+        double d = sqrt(b*b - 4 * a * c);
+
+        //cout<<"d "<<d<<endl;
+
+        double t_pos = (-b+d)/(2*a);
+        double t_neg = (-b-d)/(2*a);
+
+        double final_t;
+
+        if(t_pos > 0 && t_neg> 0){
+
+            final_t = min(t_pos, t_neg);
+
+        }else if(t_pos > 0 && t_neg < 0){
+
+            final_t = t_pos;
+
+        }else if(t_pos< 0 && t_neg > 0){
+
+            final_t = t_neg;
+
+        }else{
+            return -1;
+        }
+
+        //cout<<"In sphere intersect"<<endl;
+
+        // setting the color of the pixel of intersection
+        final_color[0]=color[0]*1*coefficients[0];
+        final_color[1]=color[1]*1*coefficients[0];
+        final_color[2]=color[2]*1*coefficients[0];
+
+        //cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
+
+        // returning the t_neg for now(not sure here
+        return final_t;
     }
 
 };
@@ -156,7 +264,12 @@ public:
     }
 
     void draw() {
-
+        glColor3f(color[0], color[1], color[2]);
+        glBegin(GL_TRIANGLES);
+            glVertex3f(first_point.x, first_point.y, first_point.z);
+            glVertex3f(second_point.x, second_point.y, second_point.z);
+            glVertex3f(third_point.x, third_point.y, third_point.z);
+        glEnd();
     }
 };
 
@@ -174,12 +287,11 @@ public:
         printVector3D(reference_point);
 
     }
-
-    void draw() {}
 };
 
 class Floor : public Object {
 public:
+    double num_of_tiles;
     Floor(double floorWidth, double tileWidth) {
         Vector3D reference_p;
         reference_p.x = -floorWidth / 2;
@@ -188,12 +300,57 @@ public:
 
         reference_point = Vector3D{-floorWidth / 2, -floorWidth / 2, 0};
         length = tileWidth;
+        num_of_tiles = (int) floorWidth/tileWidth;
     }
 
     void draw() {
+
+
 // write codes for drawing a checkerboard-like
 // floor with alternate colors on adjacent tiles
+    double x,y;
+    int color = 0;
+    for(int i =0; i<num_of_tiles;i++){
+
+        y = reference_point.y + 20*i;
+        //cout<<"y = "<<y<<endl;
+
+        for(int j = 0;j<num_of_tiles;j++){
+
+            x = reference_point.x + 20*j;
+
+            //cout<<color<<endl;
+            glColor3f(color,color,color);
+            glBegin(GL_QUADS);
+            {
+                glVertex3f(x, y, 0);
+                glVertex3f(x + 20, y, 0);
+                glVertex3f(x+20, y+20, 0);
+                glVertex3f(x, y+20, 0);
+            }
+            glEnd();
+
+            color= 1- color;
+        }
+        color= 1- color;
+        x = reference_point.x;
     }
+
+    }
+
+    virtual double intersect(Ray& r, vector<double>&final_color, int level) {
+
+        Vector3D normal= {0,0,1};
+
+        double t = getDotProduct(normal, r.start)/getDotProduct(normal, r.dir);
+        t = t*-1;
+
+        if(t < 0) return -1;
+
+        return t;
+    }
+
+
 };
 
 class Light {
