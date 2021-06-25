@@ -47,7 +47,7 @@ struct point {
 };
 
 Vector3D pos = {100, 100, 0};
-Vector3D u = {0, 0, -1};
+Vector3D u = {0, 0, 1};
 Vector3D l = {-1 / sqrt(2), -1 / sqrt(2), 0};
 Vector3D r = {-1 / sqrt(2), 1 / sqrt(2), 0};
 double k = 2;
@@ -322,6 +322,8 @@ void drawUpperSphere(double radius, int slices, int stacks, double shiftBy) {
 
 void capture(){
 
+    cout<<"number of objects: "<<objects.size()<<endl;
+
     bitmap_image image((int) image_width, (int) image_height);
 
     // setting up the image
@@ -344,12 +346,16 @@ void capture(){
     // Choose middle of the grid cell
     topleft = topleft + r*(0.5*du) - u*(0.5*dv);
     printVector3D(topleft);
-    // the index of the nearest objectdummy_color
-    int nearest;
-    double t_min=100000, t;
 
-    for(int i = 0; i<image_width;i++){
-        for(int j=0;j<image_height;j++){
+    // the index of the nearest object dummy_color
+
+
+    for(int i = 0; i<image_width; i++){
+        for(int j = 0; j<image_height; j++){
+
+
+                int nearest;
+                double t_min=100000, t;
 
                 // calculate current pixel vector/point
                 Vector3D currentPixel = topleft + r*(i*du) - u*(j*dv);
@@ -359,20 +365,20 @@ void capture(){
                 // create ray object
                 //Ray* r = new Ray(pos, R_d);
                 //double*  color = new double[3];
+
                 Ray r(pos, R_d);
                 vector<double> dummy_color;
                 dummy_color.push_back(0);
                 dummy_color.push_back(0);
                 dummy_color.push_back(0);
                 //cout<<getVectorMagnitude(r.dir);
+
                 // iterating over the objects
                 for(int k = 0; k < objects.size(); k++){
+
                     //cout<<"for pixel i and j" << i << " " << j<<endl;
                     t = objects[k]->intersect(r, dummy_color, 0);
-                    //if(k == 1 && t!=-1)
-                        //cout<<"obj = "<<k<<" t = "<<t<<" t_min = "<<t_min<<endl;
-                    ////cout<<"here"<<t<<endl;
-                    if(t_min > t && t!=-1){
+                    if(t < t_min){
                         nearest = k; //storing the index of the nearest object
                         t_min = t;
                         //cout<<"storing "<<k<<endl;
@@ -385,22 +391,18 @@ void capture(){
                 color.push_back(0);
                 color.push_back(0);
                 color.push_back(0);
-                t = objects[nearest]->intersect(r, color, 1);
-                 //cout<<"hersssasasae"<<endl;
+                double temp = objects[nearest]->intersect(r, color, 1);
+
                 // we set image pixel here
                 //if(color[2] !=0) cout<<"here the color is : "<<color[1]<<endl;
                 //cout<<color[0]<<color[1]<<color[2]<<endl;
-                image.set_pixel(j,i,color[0]*255, color[1]*255, color[2]*255);
+                image.set_pixel(i,j,color[0]*255, color[1]*255, color[2]*255);
                 color.clear();
                 dummy_color.clear();
-                //color[0] = 0;
-                //color[1] = 0;
-                //color[2] = 0;
 
         }
     }
 
-    // ,cout<<"generating image"<<endl;
     image.save_image("E:\\ACADEMICS\\4-1\\Lab\\Graphics\\Ray-Tracing\\Problem-1\\test_akil.bmp");
 }
 
@@ -762,9 +764,9 @@ void loadData() {
     temp->setCoEfficients(0.4, 0.2, 0.1, 0.3);
     temp->setShine(5);
 
-    objects.push_back(temp);*/
+    objects.push_back(temp);
 
-    cout << objects.size() << endl;
+    cout << objects.size() << endl;*/
 
 
     /*for (int i = 0; i < objects.size(); i++) {
@@ -773,7 +775,6 @@ void loadData() {
 
 
 }
-
 
 void display() {
 
@@ -810,8 +811,42 @@ void display() {
     ****************************/
     //add objects
 
+    //glRotatef(-90, 0, 1, 0);
+
     drawAxes();
-    drawGrid();
+    //drawGrid();
+
+    glColor3f(1.0,0.0,0.0);
+    glBegin(GL_QUADS);
+    {
+        glVertex3f(10, 10, 0);
+        glVertex3f(10, -10, 0);
+        glVertex3f(-10, -10, 0);
+        glVertex3f(-10, 10, 0);
+    }
+    glEnd();
+
+
+    glColor3f(0.0,1.0,0.0);
+    glBegin(GL_QUADS);
+    {
+        glVertex3f(10, 0, 10);
+        glVertex3f(10, 0, -10);
+        glVertex3f(-10, 0, -10);
+        glVertex3f(-10, 0, 10);
+    }
+    glEnd();
+
+
+    glColor3f(0.0,0.0,1.0);
+    glBegin(GL_QUADS);
+    {
+        glVertex3f(0, 10, 10);
+        glVertex3f(0, 10, -10);
+        glVertex3f(0, -10, -10);
+        glVertex3f(0, -10, 10);
+    }
+    glEnd();
 
     for(int i = 0;i<objects.size();i++){
         objects[i]->draw();

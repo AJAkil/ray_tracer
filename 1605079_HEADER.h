@@ -148,13 +148,13 @@ public:
         h = length * sin(((double) i / (double) stacks) * (pi / 2));
         r = length * cos(((double) i / (double) stacks) * (pi / 2));
         for (j = 0; j <= slices; j++) {
-            points[i][j].x = r * cos(((double) j / (double) slices) * 2 * pi);
-            points[i][j].y = r * sin(((double) j / (double) slices) * 2 * pi);
+            points[i][j].x = r * cos(((double) j / (double) slices) * 2 * pi) + reference_point.x;
+            points[i][j].y = r * sin(((double) j / (double) slices) * 2 * pi) + reference_point.y;
             points[i][j].z = h;
         }
     }
 
-    glRotatef(90, 0, 1, 0);
+    //glRotatef(90, 0, 1, 0);
 
     //glTranslatef(reference_point.x, reference_point.y, reference_point.z)
     //draw quads using generated points
@@ -165,10 +165,10 @@ public:
             glBegin(GL_QUADS);
             {
                 //lower hemisphere
-                glVertex3f(points[i][j].x + reference_point.x, points[i][j].y + reference_point.y, -points[i][j].z + reference_point.z);
-                glVertex3f(points[i][j + 1].x + reference_point.x, points[i][j + 1].y + reference_point.y, -points[i][j + 1].z + reference_point.z);
-                glVertex3f(points[i + 1][j + 1].x + reference_point.x, points[i + 1][j + 1].y + reference_point.y, -points[i + 1][j + 1].z + reference_point.z);
-                glVertex3f(points[i + 1][j].x + reference_point.x, points[i + 1][j].y + reference_point.y, -points[i + 1][j].z + reference_point.z);
+                glVertex3f(points[i][j].x , points[i][j].y , -points[i][j].z + reference_point.z);
+                glVertex3f(points[i][j + 1].x , points[i][j + 1].y , -points[i][j + 1].z + reference_point.z);
+                glVertex3f(points[i + 1][j + 1].x , points[i + 1][j + 1].y , -points[i + 1][j + 1].z + reference_point.z);
+                glVertex3f(points[i + 1][j].x, points[i + 1][j].y, -points[i + 1][j].z + reference_point.z);
             }
             glEnd();
         }
@@ -180,13 +180,14 @@ public:
             glBegin(GL_QUADS);
             {
                 //upper hemisphere
-                glVertex3f(points[i][j].x + reference_point.x, points[i][j].y + reference_point.y, points[i][j].z + reference_point.z);
-                glVertex3f(points[i][j + 1].x +reference_point.x, points[i][j + 1].y + reference_point.y, points[i][j + 1].z + reference_point.z);
-                glVertex3f(points[i + 1][j + 1].x + reference_point.x, points[i + 1][j + 1].y + reference_point.y, points[i + 1][j + 1].z +  reference_point.z);
-                glVertex3f(points[i + 1][j].x + reference_point.x, points[i + 1][j].y + reference_point.y, points[i + 1][j].z + reference_point.z);
+                glVertex3f(points[i][j].x, points[i][j].y , points[i][j].z + reference_point.z);
+                glVertex3f(points[i][j + 1].x , points[i][j + 1].y , points[i][j + 1].z + reference_point.z);
+                glVertex3f(points[i + 1][j + 1].x , points[i + 1][j + 1].y, points[i + 1][j + 1].z +  reference_point.z);
+                glVertex3f(points[i + 1][j].x , points[i + 1][j].y, points[i + 1][j].z + reference_point.z);
             }
             glEnd();
         }
+
     }
     }
     virtual double intersect(Ray& r, vector<double>&final_color, int level) {
@@ -207,7 +208,7 @@ public:
 
         if(temp<0) {
             //cout<<"d<0"<<endl;
-            return -1.0;
+            return 1000000;
         }
 
         double d = sqrt(b*b - 4 * a * c);
@@ -232,7 +233,7 @@ public:
             final_t = t_neg;
 
         }else{
-            return -1;
+            return 1000000;
         }
 
         //cout<<"In sphere intersect"<<endl;
