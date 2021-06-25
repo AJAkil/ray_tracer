@@ -206,7 +206,7 @@ public:
 
         double temp = b*b - 4 * a * c;
 
-        if(temp<0) {
+        if(temp < 0) {
             //cout<<"d<0"<<endl;
             return 1000000;
         }
@@ -272,6 +272,57 @@ public:
             glVertex3f(third_point.x, third_point.y, third_point.z);
         glEnd();
     }
+
+    virtual double intersect(Ray& r, vector<double>&final_color, int level){
+
+        double beta,gamma,t, A, D1, D2, D3,x_o,y_o,z_o,x_d,y_d,z_d;
+
+    // setting up the ray components
+       x_o = r.start.x;
+       y_o = r.start.y;
+       z_o = r.start.z;
+
+       x_d = r.dir.x;
+       y_d = r.dir.y;
+       z_d = r.dir.z;
+
+       Vector3D a = first_point;
+       Vector3D b = second_point;
+       Vector3D c = third_point;
+
+        // calculate A
+        A  = (a.x - b.x) * ((a.y - c.y) * z_d - y_d * (a.z - c.z)) - (a.x - c.x) * ((a.y - b.y) * z_d - (a.z - b.z)* y_d) + x_d * ((a.y - b.y) * (a.z - c.z) - (a.y - c.y) * (a.z - b.z));
+
+        // calculate D1
+        D1 = (a.x - x_o) * ((a.y - c.y) * z_d - y_d * (a.z - c.z)) - (a.x - c.x) * ((a.y - y_o) * z_d - (a.z - z_o) * y_d) + x_d * ((a.y - y_o) * (a.z - c.z) - (a.y - c.y) * (a.z - z_o));
+
+        // calculate D2
+        D2 = (a.x - b.x) * ((a.y - y_o) * z_d - y_d * (a.z - z_o)) - (a.x - x_o) * ((a.y - b.y) * z_d - (a.z - b.z) * y_d) + x_d * ((a.y - b.y) * (a.z - z_o) - (a.y - y_o) * (a.z - b.z));
+
+        // calculate D3
+        D3 = (a.x - b.x) * ((a.y - c.y) * (a.z - z_o) - (a.y - y_o) * (a.z - c.z)) - (a.x - c.x) * ((a.y - b.y) * (a.z - z_o) - (a.z -  b.z) * (a.y - y_o)) + (a.x - x_o) * ((a.y - b.y) * (a.z - c.z) - (a.y - c.y)*(a.z - b.z));
+
+        beta = D1/A;
+        gamma = D2/A;
+        t = D3/A;
+
+        if(beta + gamma < 1 && beta > 0 && gamma > 0 && t > 0){
+
+            final_color[0]=color[0]*1*coefficients[0];
+            final_color[1]=color[1]*1*coefficients[0];
+            final_color[2]=color[2]*1*coefficients[0];
+
+            //cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
+
+            // returning the final_t
+            return t;
+
+        }else{
+
+            return 1000000;
+        }
+
+    }
 };
 
 class GeneralQuadrates : public Object {
@@ -286,6 +337,110 @@ public:
         width = cube_w;
         height = cube_h;
         printVector3D(reference_point);
+
+        cout<<"coeff"<<eqn_coefficients.size()<<endl;
+
+    }
+
+
+    virtual double intersect(Ray& r, vector<double>&final_color, int level) {
+
+       double x_o,y_o,z_o,x_d,y_d,z_d;
+
+       // setting up the coefficiens
+       double A = eqn_coefficients[0];
+       double B = eqn_coefficients[1];
+       double C = eqn_coefficients[2];
+       double D = eqn_coefficients[3];
+       double E = eqn_coefficients[4];
+       double F = eqn_coefficients[5];
+       double G = eqn_coefficients[6];
+       double H = eqn_coefficients[7];
+       double I = eqn_coefficients[8];
+       double J = eqn_coefficients[9];
+
+       //cout<<A<<" "<<B<<" "<<C<<" "<<D<<" "<<E<<" "<<F<<" "<<G<<" "<<H<<" "<<I<<" "<<J<<endl;
+
+       // setting up the ray components
+       x_o = r.start.x;
+       y_o = r.start.y;
+       z_o = r.start.z;
+
+       x_d = r.dir.x;
+       y_d = r.dir.y;
+       z_d = r.dir.z;
+
+
+       // we calculate a,b,c and find d
+       double a = A*x_d*x_d + B*y_d*y_d + C*z_d*z_d + D*x_d*y_d + E*x_d*z_d + F*y_d*z_d;
+       double b = 2*A*x_o*x_d + 2*B*y_o*y_d + 2*C*z_o*z_d + D*x_o*y_d + D*y_o*x_d + E*x_o*z_d + E*z_o*x_d + F*y_o*z_d + F*z_o*y_d + G*x_d + H*y_d + I*z_d;
+       double c = A*x_o*x_o + B*y_o*y_o + C*z_o*z_o + D*x_o*y_o + E*x_o*z_o + F*y_o*z_o + G*x_o + H*y_o + I*z_o + J;
+
+       // we first calculate the discriminant to check for non intersection
+       double temp = b*b - 4 * a * c;
+
+        if(temp < 0) {
+            //cout<<"d<0"<<endl;
+            return 1000000;
+        }
+
+        double d = sqrt(b*b - 4 * a * c);
+
+        //cout<<"d "<<d<<endl;
+
+        // we compute the value of t here
+        double t_pos = (-b+d)/(2*a);
+        double t_neg = (-b-d)/(2*a);
+
+        double final_t;
+
+        if(t_pos > 0 && t_neg> 0){
+
+            final_t = min(t_pos, t_neg);
+
+        }else if(t_pos > 0 && t_neg < 0){
+
+            final_t = t_pos;
+
+        }else if(t_pos< 0 && t_neg > 0){
+
+            final_t = t_neg;
+
+        }else{
+            return 1000000;
+        }
+
+
+       // we check if the point of intersection is within the bounding cube or not
+
+       // we first find the point of intersection
+
+       //DEBUG
+      //cout<<length<<" "<<reference_point.y<<" "<<reference_point.z<<endl;
+
+
+
+       Vector3D poi = {r.start.x + final_t*r.dir.x, r.start.y + final_t*r.dir.y, r.start.z + final_t*r.dir.z};
+
+       // then we check if the poi is within cube
+       if (poi.x <= reference_point.x + length && poi.y <= reference_point.y + width && poi.z <= reference_point.z + height){
+
+        // we set the color and then we return the final t
+
+        // setting the color of the pixel of intersection
+        final_color[0]=color[0]*1*coefficients[0];
+        final_color[1]=color[1]*1*coefficients[0];
+        final_color[2]=color[2]*1*coefficients[0];
+
+        cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
+
+        // returning the final_t
+        cout<<"In general "<<final_t<<endl;
+        return final_t;
+
+       }else{
+        return 1000000;
+       }
 
     }
 };
@@ -305,8 +460,6 @@ public:
     }
 
     void draw() {
-
-
 // write codes for drawing a checkerboard-like
 // floor with alternate colors on adjacent tiles
     double x,y;

@@ -355,7 +355,7 @@ void capture(){
 
 
                 int nearest;
-                double t_min=100000, t;
+                double t_min=1000, t;
 
                 // calculate current pixel vector/point
                 Vector3D currentPixel = topleft + r*(i*du) - u*(j*dv);
@@ -816,7 +816,7 @@ void display() {
     drawAxes();
     //drawGrid();
 
-    glColor3f(1.0,0.0,0.0);
+    /*glColor3f(1.0,0.0,0.0);
     glBegin(GL_QUADS);
     {
         glVertex3f(10, 10, 0);
@@ -846,7 +846,7 @@ void display() {
         glVertex3f(0, -10, -10);
         glVertex3f(0, -10, 10);
     }
-    glEnd();
+    glEnd();*/
 
     for(int i = 0;i<objects.size();i++){
         objects[i]->draw();
