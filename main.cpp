@@ -354,8 +354,8 @@ void capture(){
         for(int j = 0; j<image_height; j++){
 
 
-                int nearest;
-                double t_min=1000, t;
+                int nearest = -1;
+                double t_min=10000, t;
 
                 // calculate current pixel vector/point
                 Vector3D currentPixel = topleft + r*(i*du) - u*(j*dv);
@@ -391,12 +391,16 @@ void capture(){
                 color.push_back(0);
                 color.push_back(0);
                 color.push_back(0);
-                double temp = objects[nearest]->intersect(r, color, 1);
 
-                // we set image pixel here
-                //if(color[2] !=0) cout<<"here the color is : "<<color[1]<<endl;
-                //cout<<color[0]<<color[1]<<color[2]<<endl;
-                image.set_pixel(i,j,color[0]*255, color[1]*255, color[2]*255);
+                if (nearest!= -1){
+                    double temp = objects[nearest]->intersect(r, color, 1);
+
+                    // we set image pixel here
+                    //if(color[2] !=0) cout<<"here the color is : "<<color[1]<<endl;
+                    //cout<<color[0]<<color[1]<<color[2]<<endl;
+                    image.set_pixel(i,j,color[0]*255, color[1]*255, color[2]*255);
+                }
+
                 color.clear();
                 dummy_color.clear();
 
@@ -756,7 +760,7 @@ void loadData() {
     }
 
     // code for creating the floor object
-    /*Object *temp;
+    Object *temp;
     temp = new Floor(1000, 20); // you can change these values
 
     // Setting the color
@@ -766,7 +770,7 @@ void loadData() {
 
     objects.push_back(temp);
 
-    cout << objects.size() << endl;*/
+    cout << objects.size() << endl;
 
 
     /*for (int i = 0; i < objects.size(); i++) {

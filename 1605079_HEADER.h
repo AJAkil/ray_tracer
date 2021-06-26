@@ -392,6 +392,20 @@ public:
         double t_pos = (-b+d)/(2*a);
         double t_neg = (-b-d)/(2*a);
 
+       // we check if the point of intersection is within the bounding cube or not
+
+       // we first find the point of intersections
+       Vector3D poi1 = {r.start.x + t_pos*r.dir.x, r.start.y + t_pos*r.dir.y, r.start.z + t_pos*r.dir.z};
+       Vector3D poi2 = {r.start.x + t_neg*r.dir.x, r.start.y + t_neg*r.dir.y, r.start.z + t_neg*r.dir.z};
+
+       // if t_neg > 0 and point 2 is valid return t_neg --> else same for t_pos > 0 and point 1 is valid ---> non intersection
+
+       // then we check if the poi2 and poi2 is within cube
+       if ((reference_point.x <= poi1.x && poi1.x <= reference_point.x + length) && (reference_point.y <=  poi1.y && poi1.y <= reference_point.y + width) && (reference_point.z <=  poi1.z && poi1.z <= reference_point.z + height)
+           && (reference_point.x <= poi2.x && poi2.x <= reference_point.x + length) && (reference_point.y <=  poi2.y && poi2.y <= reference_point.y + width) && (reference_point.z <=  poi2.z && poi2.z <= reference_point.z + height)){
+
+        // we choose the appropriate t from here and then we set the color here
+        cout<<"FIRST CASE"<<endl;
         double final_t;
 
         if(t_pos > 0 && t_neg> 0){
@@ -407,23 +421,10 @@ public:
             final_t = t_neg;
 
         }else{
+            cout<<"No two point"<<endl;
             return 1000000;
         }
 
-
-       // we check if the point of intersection is within the bounding cube or not
-
-       // we first find the point of intersection
-
-       //DEBUG
-      //cout<<length<<" "<<reference_point.y<<" "<<reference_point.z<<endl;
-
-
-
-       Vector3D poi = {r.start.x + final_t*r.dir.x, r.start.y + final_t*r.dir.y, r.start.z + final_t*r.dir.z};
-
-       // then we check if the poi is within cube
-       if (poi.x <= reference_point.x + length && poi.y <= reference_point.y + width && poi.z <= reference_point.z + height){
 
         // we set the color and then we return the final t
 
@@ -432,13 +433,65 @@ public:
         final_color[1]=color[1]*1*coefficients[0];
         final_color[2]=color[2]*1*coefficients[0];
 
-        cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
+        //cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
 
         // returning the final_t
         cout<<"In general "<<final_t<<endl;
         return final_t;
 
+       }else if((reference_point.x <= poi1.x && poi1.x <= reference_point.x + length) && (reference_point.y <=  poi1.y && poi1.y <= reference_point.y + width) && (reference_point.z <=  poi1.z && poi1.z <= reference_point.z + height)){
+
+        // we check for the t_pos here
+                cout<<"SECOND CASE"<<endl;
+
+        if(t_pos > 0){
+
+
+        // setting the color of the pixel of intersection
+        final_color[0]=color[0]*1*coefficients[0];
+        final_color[1]=color[1]*1*coefficients[0];
+        final_color[2]=color[2]*1*coefficients[0];
+
+        //cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
+
+        // returning the final_t
+        cout<<"in general "<<t_pos<<endl;
+        return t_pos;
+
+        }else{
+
+        cout<<"No t_pos"<<endl;
+        return 1000000;
+
+        }
+
+       }else if((reference_point.x <= poi2.x && poi2.x <= reference_point.x + length) && (reference_point.y <=  poi2.y && poi2.y <= reference_point.y + width) && (reference_point.z <=  poi2.z && poi2.z <= reference_point.z + height)){
+
+                cout<<"THIRD CASE"<<endl;
+        if(t_neg > 0){
+
+
+        // setting the color of the pixel of intersection
+        final_color[0]=color[0]*1*coefficients[0];
+        final_color[1]=color[1]*1*coefficients[0];
+        final_color[2]=color[2]*1*coefficients[0];
+
+        //cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
+
+        // returning the final_t
+        cout<<"in general "<<t_neg;
+        return t_neg;
+
+        }else{
+
+        cout<<"No t_neg"<<endl;
+        return 1000000;
+
+        }
+
        }else{
+                   //cout<<"FOURTH CASE"<<endl;
+        //cout<<"No ultimate"<<endl;
         return 1000000;
        }
 
@@ -499,9 +552,42 @@ public:
         double t = getDotProduct(normal, r.start)/getDotProduct(normal, r.dir);
         t = t*-1;
 
-        if(t < 0) return -1;
+        if(t < 0) return 1000000;
 
-        return t;
+        Vector3D poi = {r.start.x + t*r.dir.x, r.start.y + t*r.dir.y, r.start.z + t*r.dir.z};
+
+        // checking to see if the poi is within the floor itself
+        //cout<<reference_point.x<<" " <<reference_point.y<<endl;
+        if( (reference_point.x <= poi.x && poi.x <= -1 * reference_point.x) && ( reference_point.y <= poi.y && poi.y <= -1*reference_point.y)){
+
+            // setting the color of the pixel of intersection
+            //cout<<"here"<<endl;
+
+            // set the color of the floor here
+            int x  = (poi.x - reference_point.x)/length;
+            int y  = (poi.y - reference_point.y)/length;
+
+            double r = 0, g = 0, b = 0;
+
+            if( (x + y) % 2 == 0){
+
+            final_color[0]= 0*1*coefficients[0];
+            final_color[1]= 0*1*coefficients[0];
+            final_color[2]= 0*1*coefficients[0];
+
+            }else{
+
+            final_color[0]= 1*1*coefficients[0];
+            final_color[1]= 1*1*coefficients[0];
+            final_color[2]= 1*1*coefficients[0];
+
+            }
+
+            return t;
+
+        } else return 1000000;
+
+
     }
 
 
