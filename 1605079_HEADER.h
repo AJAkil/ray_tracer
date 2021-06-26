@@ -119,7 +119,7 @@ public:
         coefficients[3] = recur_reflect;
     }
 
-    virtual double intersect(Ray& r, vector<double>&final_color, int level) {
+    virtual double intersect(Ray &r, vector<double> &final_color, int level) {
         return -1.0;
     }
 
@@ -137,63 +137,67 @@ public:
     }
 
     void draw() {
-    int slices = 50;
-    int stacks = 30;
-    Vector3D points[100][100];
-    int i, j;
-    double h, r;
-    //printVector3D(reference_point);
-    //generate points
-    for (i = 0; i <= stacks; i++) {
-        h = length * sin(((double) i / (double) stacks) * (pi / 2));
-        r = length * cos(((double) i / (double) stacks) * (pi / 2));
-        for (j = 0; j <= slices; j++) {
-            points[i][j].x = r * cos(((double) j / (double) slices) * 2 * pi) + reference_point.x;
-            points[i][j].y = r * sin(((double) j / (double) slices) * 2 * pi) + reference_point.y;
-            points[i][j].z = h;
-        }
-    }
-
-    //glRotatef(90, 0, 1, 0);
-
-    //glTranslatef(reference_point.x, reference_point.y, reference_point.z)
-    //draw quads using generated points
-    for (i = 0; i < stacks; i++) {
-
-        for (j = 0; j < slices; j++) {
-            glColor3f(color[0], color[1], color[2]);
-            glBegin(GL_QUADS);
-            {
-                //lower hemisphere
-                glVertex3f(points[i][j].x , points[i][j].y , -points[i][j].z + reference_point.z);
-                glVertex3f(points[i][j + 1].x , points[i][j + 1].y , -points[i][j + 1].z + reference_point.z);
-                glVertex3f(points[i + 1][j + 1].x , points[i + 1][j + 1].y , -points[i + 1][j + 1].z + reference_point.z);
-                glVertex3f(points[i + 1][j].x, points[i + 1][j].y, -points[i + 1][j].z + reference_point.z);
+        int slices = 50;
+        int stacks = 30;
+        Vector3D points[100][100];
+        int i, j;
+        double h, r;
+        //printVector3D(reference_point);
+        //generate points
+        for (i = 0; i <= stacks; i++) {
+            h = length * sin(((double) i / (double) stacks) * (pi / 2));
+            r = length * cos(((double) i / (double) stacks) * (pi / 2));
+            for (j = 0; j <= slices; j++) {
+                points[i][j].x = r * cos(((double) j / (double) slices) * 2 * pi) + reference_point.x;
+                points[i][j].y = r * sin(((double) j / (double) slices) * 2 * pi) + reference_point.y;
+                points[i][j].z = h;
             }
-            glEnd();
         }
-    }
 
-    for (i = 0; i < stacks; i++) {
-        for (j = 0; j < slices; j++) {
-            glColor3f(color[0], color[1], color[2]);
-            glBegin(GL_QUADS);
-            {
-                //upper hemisphere
-                glVertex3f(points[i][j].x, points[i][j].y , points[i][j].z + reference_point.z);
-                glVertex3f(points[i][j + 1].x , points[i][j + 1].y , points[i][j + 1].z + reference_point.z);
-                glVertex3f(points[i + 1][j + 1].x , points[i + 1][j + 1].y, points[i + 1][j + 1].z +  reference_point.z);
-                glVertex3f(points[i + 1][j].x , points[i + 1][j].y, points[i + 1][j].z + reference_point.z);
+        //glRotatef(90, 0, 1, 0);
+
+        //glTranslatef(reference_point.x, reference_point.y, reference_point.z)
+        //draw quads using generated points
+        for (i = 0; i < stacks; i++) {
+
+            for (j = 0; j < slices; j++) {
+                glColor3f(color[0], color[1], color[2]);
+                glBegin(GL_QUADS);
+                {
+                    //lower hemisphere
+                    glVertex3f(points[i][j].x, points[i][j].y, -points[i][j].z + reference_point.z);
+                    glVertex3f(points[i][j + 1].x, points[i][j + 1].y, -points[i][j + 1].z + reference_point.z);
+                    glVertex3f(points[i + 1][j + 1].x, points[i + 1][j + 1].y,
+                               -points[i + 1][j + 1].z + reference_point.z);
+                    glVertex3f(points[i + 1][j].x, points[i + 1][j].y, -points[i + 1][j].z + reference_point.z);
+                }
+                glEnd();
             }
-            glEnd();
         }
 
+        for (i = 0; i < stacks; i++) {
+            for (j = 0; j < slices; j++) {
+                glColor3f(color[0], color[1], color[2]);
+                glBegin(GL_QUADS);
+                {
+                    //upper hemisphere
+                    glVertex3f(points[i][j].x, points[i][j].y, points[i][j].z + reference_point.z);
+                    glVertex3f(points[i][j + 1].x, points[i][j + 1].y, points[i][j + 1].z + reference_point.z);
+                    glVertex3f(points[i + 1][j + 1].x, points[i + 1][j + 1].y,
+                               points[i + 1][j + 1].z + reference_point.z);
+                    glVertex3f(points[i + 1][j].x, points[i + 1][j].y, points[i + 1][j].z + reference_point.z);
+                }
+                glEnd();
+            }
+
+        }
     }
-    }
-    virtual double intersect(Ray& r, vector<double>&final_color, int level) {
+
+    virtual double intersect(Ray &r, vector<double> &final_color, int level) {
 
         //printVector3D(r.dir);
-        Vector3D R_start = {r.start.x - reference_point.x, r.start.y - reference_point.y, r.start.z - reference_point.z};
+        Vector3D R_start = {r.start.x - reference_point.x, r.start.y - reference_point.y,
+                            r.start.z - reference_point.z};
         //cout<<"R_START "<<endl;
         //printVector3D(R_start);
         //cout<<"R_DIR "<<endl;
@@ -201,47 +205,47 @@ public:
         double a = 1;
         double b = 2 * getDotProduct(r.dir, R_start);
         //cout<<"b "<<b<<endl;
-        double c = getDotProduct(R_start, R_start) - length*length;
+        double c = getDotProduct(R_start, R_start) - length * length;
         //cout<<"c "<<c<<endl;
 
-        double temp = b*b - 4 * a * c;
+        double temp = b * b - 4 * a * c;
 
-        if(temp < 0) {
+        if (temp < 0) {
             //cout<<"d<0"<<endl;
             return 1000000;
         }
 
-        double d = sqrt(b*b - 4 * a * c);
+        double d = sqrt(b * b - 4 * a * c);
 
         //cout<<"d "<<d<<endl;
 
-        double t_pos = (-b+d)/(2*a);
-        double t_neg = (-b-d)/(2*a);
+        double t_pos = (-b + d) / (2 * a);
+        double t_neg = (-b - d) / (2 * a);
 
         double final_t;
 
-        if(t_pos > 0 && t_neg> 0){
+        if (t_pos > 0 && t_neg > 0) {
 
             final_t = min(t_pos, t_neg);
 
-        }else if(t_pos > 0 && t_neg < 0){
+        } else if (t_pos > 0 && t_neg < 0) {
 
             final_t = t_pos;
 
-        }else if(t_pos< 0 && t_neg > 0){
+        } else if (t_pos < 0 && t_neg > 0) {
 
             final_t = t_neg;
 
-        }else{
+        } else {
             return 1000000;
         }
 
         //cout<<"In sphere intersect"<<endl;
 
         // setting the color of the pixel of intersection
-        final_color[0]=color[0]*1*coefficients[0];
-        final_color[1]=color[1]*1*coefficients[0];
-        final_color[2]=color[2]*1*coefficients[0];
+        final_color[0] = color[0] * 1 * coefficients[0];
+        final_color[1] = color[1] * 1 * coefficients[0];
+        final_color[2] = color[2] * 1 * coefficients[0];
 
         //cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
 
@@ -267,57 +271,65 @@ public:
     void draw() {
         glColor3f(color[0], color[1], color[2]);
         glBegin(GL_TRIANGLES);
-            glVertex3f(first_point.x, first_point.y, first_point.z);
-            glVertex3f(second_point.x, second_point.y, second_point.z);
-            glVertex3f(third_point.x, third_point.y, third_point.z);
+        glVertex3f(first_point.x, first_point.y, first_point.z);
+        glVertex3f(second_point.x, second_point.y, second_point.z);
+        glVertex3f(third_point.x, third_point.y, third_point.z);
         glEnd();
     }
 
-    virtual double intersect(Ray& r, vector<double>&final_color, int level){
+    virtual double intersect(Ray &r, vector<double> &final_color, int level) {
 
-        double beta,gamma,t, A, D1, D2, D3,x_o,y_o,z_o,x_d,y_d,z_d;
+        double beta, gamma, t, A, D1, D2, D3, x_o, y_o, z_o, x_d, y_d, z_d;
 
-    // setting up the ray components
-       x_o = r.start.x;
-       y_o = r.start.y;
-       z_o = r.start.z;
+        // setting up the ray components
+        x_o = r.start.x;
+        y_o = r.start.y;
+        z_o = r.start.z;
 
-       x_d = r.dir.x;
-       y_d = r.dir.y;
-       z_d = r.dir.z;
+        x_d = r.dir.x;
+        y_d = r.dir.y;
+        z_d = r.dir.z;
 
-       Vector3D a = first_point;
-       Vector3D b = second_point;
-       Vector3D c = third_point;
+        Vector3D a = first_point;
+        Vector3D b = second_point;
+        Vector3D c = third_point;
 
         // calculate A
-        A  = (a.x - b.x) * ((a.y - c.y) * z_d - y_d * (a.z - c.z)) - (a.x - c.x) * ((a.y - b.y) * z_d - (a.z - b.z)* y_d) + x_d * ((a.y - b.y) * (a.z - c.z) - (a.y - c.y) * (a.z - b.z));
+        A = (a.x - b.x) * ((a.y - c.y) * z_d - y_d * (a.z - c.z)) -
+            (a.x - c.x) * ((a.y - b.y) * z_d - (a.z - b.z) * y_d) +
+            x_d * ((a.y - b.y) * (a.z - c.z) - (a.y - c.y) * (a.z - b.z));
 
         // calculate D1
-        D1 = (a.x - x_o) * ((a.y - c.y) * z_d - y_d * (a.z - c.z)) - (a.x - c.x) * ((a.y - y_o) * z_d - (a.z - z_o) * y_d) + x_d * ((a.y - y_o) * (a.z - c.z) - (a.y - c.y) * (a.z - z_o));
+        D1 = (a.x - x_o) * ((a.y - c.y) * z_d - y_d * (a.z - c.z)) -
+             (a.x - c.x) * ((a.y - y_o) * z_d - (a.z - z_o) * y_d) +
+             x_d * ((a.y - y_o) * (a.z - c.z) - (a.y - c.y) * (a.z - z_o));
 
         // calculate D2
-        D2 = (a.x - b.x) * ((a.y - y_o) * z_d - y_d * (a.z - z_o)) - (a.x - x_o) * ((a.y - b.y) * z_d - (a.z - b.z) * y_d) + x_d * ((a.y - b.y) * (a.z - z_o) - (a.y - y_o) * (a.z - b.z));
+        D2 = (a.x - b.x) * ((a.y - y_o) * z_d - y_d * (a.z - z_o)) -
+             (a.x - x_o) * ((a.y - b.y) * z_d - (a.z - b.z) * y_d) +
+             x_d * ((a.y - b.y) * (a.z - z_o) - (a.y - y_o) * (a.z - b.z));
 
         // calculate D3
-        D3 = (a.x - b.x) * ((a.y - c.y) * (a.z - z_o) - (a.y - y_o) * (a.z - c.z)) - (a.x - c.x) * ((a.y - b.y) * (a.z - z_o) - (a.z -  b.z) * (a.y - y_o)) + (a.x - x_o) * ((a.y - b.y) * (a.z - c.z) - (a.y - c.y)*(a.z - b.z));
+        D3 = (a.x - b.x) * ((a.y - c.y) * (a.z - z_o) - (a.y - y_o) * (a.z - c.z)) -
+             (a.x - c.x) * ((a.y - b.y) * (a.z - z_o) - (a.z - b.z) * (a.y - y_o)) +
+             (a.x - x_o) * ((a.y - b.y) * (a.z - c.z) - (a.y - c.y) * (a.z - b.z));
 
-        beta = D1/A;
-        gamma = D2/A;
-        t = D3/A;
+        beta = D1 / A;
+        gamma = D2 / A;
+        t = D3 / A;
 
-        if(beta + gamma < 1 && beta > 0 && gamma > 0 && t > 0){
+        if (beta + gamma < 1 && beta > 0 && gamma > 0 && t > 0) {
 
-            final_color[0]=color[0]*1*coefficients[0];
-            final_color[1]=color[1]*1*coefficients[0];
-            final_color[2]=color[2]*1*coefficients[0];
+            final_color[0] = color[0] * 1 * coefficients[0];
+            final_color[1] = color[1] * 1 * coefficients[0];
+            final_color[2] = color[2] * 1 * coefficients[0];
 
             //cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
 
             // returning the final_t
             return t;
 
-        }else{
+        } else {
 
             return 1000000;
         }
@@ -338,162 +350,232 @@ public:
         height = cube_h;
         printVector3D(reference_point);
 
-        cout<<"coeff"<<eqn_coefficients.size()<<endl;
+        cout << "coeff" << eqn_coefficients.size() << endl;
+
+    }
+
+    bool is_inside_cube(Vector3D point) {
+
+        bool flag = true;
+
+        if (length != 0) {
+
+            if (reference_point.x <= point.x && point.x <= reference_point.x + length) {
+                flag = true;
+            } else {
+                return false;
+            }
+
+        }
+
+        if (width != 0) {
+
+            if (reference_point.y <= point.y && point.y <= reference_point.y + width) {
+                flag = true;
+            } else {
+                return false;
+            }
+
+        }
+
+        if (height != 0) {
+
+            if (reference_point.z <= point.z && point.z <= reference_point.z + height) {
+                flag = true;
+            } else {
+                return false;
+            }
+
+        }
+
+        return flag;
 
     }
 
 
-    virtual double intersect(Ray& r, vector<double>&final_color, int level) {
+    virtual double intersect(Ray &r, vector<double> &final_color, int level) {
 
-       double x_o,y_o,z_o,x_d,y_d,z_d;
+        double x_o, y_o, z_o, x_d, y_d, z_d;
 
-       // setting up the coefficiens
-       double A = eqn_coefficients[0];
-       double B = eqn_coefficients[1];
-       double C = eqn_coefficients[2];
-       double D = eqn_coefficients[3];
-       double E = eqn_coefficients[4];
-       double F = eqn_coefficients[5];
-       double G = eqn_coefficients[6];
-       double H = eqn_coefficients[7];
-       double I = eqn_coefficients[8];
-       double J = eqn_coefficients[9];
+        // setting up the coefficients
+        double A = eqn_coefficients[0];
+        double B = eqn_coefficients[1];
+        double C = eqn_coefficients[2];
+        double D = eqn_coefficients[3];
+        double E = eqn_coefficients[4];
+        double F = eqn_coefficients[5];
+        double G = eqn_coefficients[6];
+        double H = eqn_coefficients[7];
+        double I = eqn_coefficients[8];
+        double J = eqn_coefficients[9];
 
-       //cout<<A<<" "<<B<<" "<<C<<" "<<D<<" "<<E<<" "<<F<<" "<<G<<" "<<H<<" "<<I<<" "<<J<<endl;
+        //cout<<A<<" "<<B<<" "<<C<<" "<<D<<" "<<E<<" "<<F<<" "<<G<<" "<<H<<" "<<I<<" "<<J<<endl;
 
-       // setting up the ray components
-       x_o = r.start.x;
-       y_o = r.start.y;
-       z_o = r.start.z;
+        // setting up the ray components
+        x_o = r.start.x;
+        y_o = r.start.y;
+        z_o = r.start.z;
 
-       x_d = r.dir.x;
-       y_d = r.dir.y;
-       z_d = r.dir.z;
+        x_d = r.dir.x;
+        y_d = r.dir.y;
+        z_d = r.dir.z;
 
 
-       // we calculate a,b,c and find d
-       double a = A*x_d*x_d + B*y_d*y_d + C*z_d*z_d + D*x_d*y_d + E*x_d*z_d + F*y_d*z_d;
-       double b = 2*A*x_o*x_d + 2*B*y_o*y_d + 2*C*z_o*z_d + D*x_o*y_d + D*y_o*x_d + E*x_o*z_d + E*z_o*x_d + F*y_o*z_d + F*z_o*y_d + G*x_d + H*y_d + I*z_d;
-       double c = A*x_o*x_o + B*y_o*y_o + C*z_o*z_o + D*x_o*y_o + E*x_o*z_o + F*y_o*z_o + G*x_o + H*y_o + I*z_o + J;
+        // we calculate a,b,c and find d
+        double a = A * x_d * x_d + B * y_d * y_d + C * z_d * z_d + D * x_d * y_d + E * x_d * z_d + F * y_d * z_d;
+        double b = 2 * A * x_o * x_d + 2 * B * y_o * y_d + 2 * C * z_o * z_d + D * x_o * y_d + D * y_o * x_d +
+                   E * x_o * z_d + E * z_o * x_d + F * y_o * z_d + F * z_o * y_d + G * x_d + H * y_d + I * z_d;
+        double c = A * x_o * x_o + B * y_o * y_o + C * z_o * z_o + D * x_o * y_o + E * x_o * z_o + F * y_o * z_o +
+                   G * x_o + H * y_o + I * z_o + J;
 
-       // we first calculate the discriminant to check for non intersection
-       double temp = b*b - 4 * a * c;
+        // we first calculate the discriminant to check for non intersection
+        double temp = b * b - 4 * a * c;
 
-        if(temp < 0) {
+        if (temp < 0) {
             //cout<<"d<0"<<endl;
             return 1000000;
         }
 
-        double d = sqrt(b*b - 4 * a * c);
+        double d = sqrt(b * b - 4 * a * c);
 
         //cout<<"d "<<d<<endl;
 
         // we compute the value of t here
-        double t_pos = (-b+d)/(2*a);
-        double t_neg = (-b-d)/(2*a);
+        double t_pos = (-b + d) / (2 * a);
+        double t_neg = (-b - d) / (2 * a);
 
-       // we check if the point of intersection is within the bounding cube or not
+        // we check if the point of intersection is within the bounding cube or not
 
-       // we first find the point of intersections
-       Vector3D poi1 = {r.start.x + t_pos*r.dir.x, r.start.y + t_pos*r.dir.y, r.start.z + t_pos*r.dir.z};
-       Vector3D poi2 = {r.start.x + t_neg*r.dir.x, r.start.y + t_neg*r.dir.y, r.start.z + t_neg*r.dir.z};
+        // we first find the point of intersections
+        Vector3D poi_pos = {r.start.x + t_pos * r.dir.x, r.start.y + t_pos * r.dir.y, r.start.z + t_pos * r.dir.z};
+        Vector3D poi_neg = {r.start.x + t_neg * r.dir.x, r.start.y + t_neg * r.dir.y, r.start.z + t_neg * r.dir.z};
 
-       // if t_neg > 0 and point 2 is valid return t_neg --> else same for t_pos > 0 and point 1 is valid ---> non intersection
+        // if t_neg > 0 and point 2 is valid return t_neg --> else same for t_pos > 0 and point 1 is valid ---> non intersection
 
-       // then we check if the poi2 and poi2 is within cube
-       if ((reference_point.x <= poi1.x && poi1.x <= reference_point.x + length) && (reference_point.y <=  poi1.y && poi1.y <= reference_point.y + width) && (reference_point.z <=  poi1.z && poi1.z <= reference_point.z + height)
-           && (reference_point.x <= poi2.x && poi2.x <= reference_point.x + length) && (reference_point.y <=  poi2.y && poi2.y <= reference_point.y + width) && (reference_point.z <=  poi2.z && poi2.z <= reference_point.z + height)){
+        if (t_neg > 0 && is_inside_cube(poi_neg)){
 
-        // we choose the appropriate t from here and then we set the color here
-        cout<<"FIRST CASE"<<endl;
-        double final_t;
+            // setting the color of the pixel of intersection
+            final_color[0] = color[0] * 1 * coefficients[0];
+            final_color[1] = color[1] * 1 * coefficients[0];
+            final_color[2] = color[2] * 1 * coefficients[0];
 
-        if(t_pos > 0 && t_neg> 0){
+            return t_neg;
 
-            final_t = min(t_pos, t_neg);
+        }else if (t_pos > 0 && is_inside_cube(poi_pos)){
 
-        }else if(t_pos > 0 && t_neg < 0){
+            // setting the color of the pixel of intersection
+            final_color[0] = color[0] * 1 * coefficients[0];
+            final_color[1] = color[1] * 1 * coefficients[0];
+            final_color[2] = color[2] * 1 * coefficients[0];
 
-            final_t = t_pos;
+            return t_pos;
 
-        }else if(t_pos< 0 && t_neg > 0){
+        } else{
+            return 10000000;
+        }
 
-            final_t = t_neg;
+        // then we check if the poi2 and poi2 is within cube
+        /*if ((reference_point.x <= poi1.x && poi1.x <= reference_point.x + length) &&
+            (reference_point.y <= poi1.y && poi1.y <= reference_point.y + width) &&
+            (reference_point.z <= poi1.z && poi1.z <= reference_point.z + height)
+            && (reference_point.x <= poi2.x && poi2.x <= reference_point.x + length) &&
+            (reference_point.y <= poi2.y && poi2.y <= reference_point.y + width) &&
+            (reference_point.z <= poi2.z && poi2.z <= reference_point.z + height)) {
 
-        }else{
-            cout<<"No two point"<<endl;
+            // we choose the appropriate t from here and then we set the color here
+            cout << "FIRST CASE" << endl;
+            double final_t;
+
+            if (t_pos > 0 && t_neg > 0) {
+
+                final_t = min(t_pos, t_neg);
+
+            } else if (t_pos > 0 && t_neg < 0) {
+
+                final_t = t_pos;
+
+            } else if (t_pos < 0 && t_neg > 0) {
+
+                final_t = t_neg;
+
+            } else {
+                cout << "No two point" << endl;
+                return 1000000;
+            }
+
+
+            // we set the color and then we return the final t
+
+            // setting the color of the pixel of intersection
+            final_color[0] = color[0] * 1 * coefficients[0];
+            final_color[1] = color[1] * 1 * coefficients[0];
+            final_color[2] = color[2] * 1 * coefficients[0];
+
+            //cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
+
+            // returning the final_t
+            cout << "In general " << final_t << endl;
+            return final_t;
+
+        } else if ((reference_point.x <= poi1.x && poi1.x <= reference_point.x + length) &&
+                   (reference_point.y <= poi1.y && poi1.y <= reference_point.y + width) &&
+                   (reference_point.z <= poi1.z && poi1.z <= reference_point.z + height)) {
+
+            // we check for the t_pos here
+            cout << "SECOND CASE" << endl;
+
+            if (t_pos > 0) {
+
+
+                // setting the color of the pixel of intersection
+                final_color[0] = color[0] * 1 * coefficients[0];
+                final_color[1] = color[1] * 1 * coefficients[0];
+                final_color[2] = color[2] * 1 * coefficients[0];
+
+                //cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
+
+                // returning the final_t
+                cout << "in general " << t_pos << endl;
+                return t_pos;
+
+            } else {
+
+                cout << "No t_pos" << endl;
+                return 1000000;
+
+            }
+
+        } else if ((reference_point.x <= poi2.x && poi2.x <= reference_point.x + length) &&
+                   (reference_point.y <= poi2.y && poi2.y <= reference_point.y + width) &&
+                   (reference_point.z <= poi2.z && poi2.z <= reference_point.z + height)) {
+
+            cout << "THIRD CASE" << endl;
+            if (t_neg > 0) {
+
+
+                // setting the color of the pixel of intersection
+                final_color[0] = color[0] * 1 * coefficients[0];
+                final_color[1] = color[1] * 1 * coefficients[0];
+                final_color[2] = color[2] * 1 * coefficients[0];
+
+                //cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
+
+                // returning the final_t
+                cout << "in general " << t_neg;
+                return t_neg;
+
+            } else {
+
+                cout << "No t_neg" << endl;
+                return 1000000;
+
+            }
+
+        } else {
+            //cout<<"FOURTH CASE"<<endl;
+            //cout<<"No ultimate"<<endl;
             return 1000000;
-        }
-
-
-        // we set the color and then we return the final t
-
-        // setting the color of the pixel of intersection
-        final_color[0]=color[0]*1*coefficients[0];
-        final_color[1]=color[1]*1*coefficients[0];
-        final_color[2]=color[2]*1*coefficients[0];
-
-        //cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
-
-        // returning the final_t
-        cout<<"In general "<<final_t<<endl;
-        return final_t;
-
-       }else if((reference_point.x <= poi1.x && poi1.x <= reference_point.x + length) && (reference_point.y <=  poi1.y && poi1.y <= reference_point.y + width) && (reference_point.z <=  poi1.z && poi1.z <= reference_point.z + height)){
-
-        // we check for the t_pos here
-                cout<<"SECOND CASE"<<endl;
-
-        if(t_pos > 0){
-
-
-        // setting the color of the pixel of intersection
-        final_color[0]=color[0]*1*coefficients[0];
-        final_color[1]=color[1]*1*coefficients[0];
-        final_color[2]=color[2]*1*coefficients[0];
-
-        //cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
-
-        // returning the final_t
-        cout<<"in general "<<t_pos<<endl;
-        return t_pos;
-
-        }else{
-
-        cout<<"No t_pos"<<endl;
-        return 1000000;
-
-        }
-
-       }else if((reference_point.x <= poi2.x && poi2.x <= reference_point.x + length) && (reference_point.y <=  poi2.y && poi2.y <= reference_point.y + width) && (reference_point.z <=  poi2.z && poi2.z <= reference_point.z + height)){
-
-                cout<<"THIRD CASE"<<endl;
-        if(t_neg > 0){
-
-
-        // setting the color of the pixel of intersection
-        final_color[0]=color[0]*1*coefficients[0];
-        final_color[1]=color[1]*1*coefficients[0];
-        final_color[2]=color[2]*1*coefficients[0];
-
-        //cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
-
-        // returning the final_t
-        cout<<"in general "<<t_neg;
-        return t_neg;
-
-        }else{
-
-        cout<<"No t_neg"<<endl;
-        return 1000000;
-
-        }
-
-       }else{
-                   //cout<<"FOURTH CASE"<<endl;
-        //cout<<"No ultimate"<<endl;
-        return 1000000;
-       }
+        }*/
 
     }
 };
@@ -501,6 +583,7 @@ public:
 class Floor : public Object {
 public:
     double num_of_tiles;
+
     Floor(double floorWidth, double tileWidth) {
         Vector3D reference_p;
         reference_p.x = -floorWidth / 2;
@@ -509,79 +592,85 @@ public:
 
         reference_point = Vector3D{-floorWidth / 2, -floorWidth / 2, 0};
         length = tileWidth;
-        num_of_tiles = (int) floorWidth/tileWidth;
+        num_of_tiles = (int) floorWidth / tileWidth;
     }
 
     void draw() {
 // write codes for drawing a checkerboard-like
 // floor with alternate colors on adjacent tiles
-    double x,y;
-    int color = 0;
-    for(int i =0; i<num_of_tiles;i++){
+        double x, y;
+        int color = 0;
+        for (int i = 0; i < num_of_tiles; i++) {
 
-        y = reference_point.y + 20*i;
-        //cout<<"y = "<<y<<endl;
+            y = reference_point.y + 20 * i;
+            //cout<<"y = "<<y<<endl;
 
-        for(int j = 0;j<num_of_tiles;j++){
+            for (int j = 0; j < num_of_tiles; j++) {
 
-            x = reference_point.x + 20*j;
+                x = reference_point.x + 20 * j;
 
-            //cout<<color<<endl;
-            glColor3f(color,color,color);
-            glBegin(GL_QUADS);
-            {
-                glVertex3f(x, y, 0);
-                glVertex3f(x + 20, y, 0);
-                glVertex3f(x+20, y+20, 0);
-                glVertex3f(x, y+20, 0);
+                //cout<<color<<endl;
+                glColor3f(color, color, color);
+                glBegin(GL_QUADS);
+                {
+                    glVertex3f(x, y, 0);
+                    glVertex3f(x + 20, y, 0);
+                    glVertex3f(x + 20, y + 20, 0);
+                    glVertex3f(x, y + 20, 0);
+                }
+                glEnd();
+
+                color = 1 - color;
             }
-            glEnd();
-
-            color= 1- color;
+            color = 1 - color;
+            x = reference_point.x;
         }
-        color= 1- color;
-        x = reference_point.x;
-    }
 
     }
 
-    virtual double intersect(Ray& r, vector<double>&final_color, int level) {
+    virtual double intersect(Ray &r, vector<double> &final_color, int level) {
 
-        Vector3D normal= {0,0,1};
+        Vector3D normal = {0, 0, 1};
 
-        double t = getDotProduct(normal, r.start)/getDotProduct(normal, r.dir);
-        t = t*-1;
+        double t = getDotProduct(normal, r.start) / getDotProduct(normal, r.dir);
+        t = t * -1;
 
-        if(t < 0) return 1000000;
+        if (t < 0) return 1000000;
 
-        Vector3D poi = {r.start.x + t*r.dir.x, r.start.y + t*r.dir.y, r.start.z + t*r.dir.z};
+        Vector3D poi = {r.start.x + t * r.dir.x, r.start.y + t * r.dir.y, r.start.z + t * r.dir.z};
 
         // checking to see if the poi is within the floor itself
         //cout<<reference_point.x<<" " <<reference_point.y<<endl;
-        if( (reference_point.x <= poi.x && poi.x <= -1 * reference_point.x) && ( reference_point.y <= poi.y && poi.y <= -1*reference_point.y)){
+        if ((reference_point.x <= poi.x && poi.x <= -1 * reference_point.x) &&
+            (reference_point.y <= poi.y && poi.y <= -1 * reference_point.y)) {
 
             // setting the color of the pixel of intersection
             //cout<<"here"<<endl;
 
             // set the color of the floor here
-            int x  = (poi.x - reference_point.x)/length;
-            int y  = (poi.y - reference_point.y)/length;
+            int x = (poi.x - reference_point.x) / length;
+            int y = (poi.y - reference_point.y) / length;
 
             double r = 0, g = 0, b = 0;
 
-            if( (x + y) % 2 == 0){
+            if ((x + y) % 2 == 0) {
 
-            final_color[0]= 0*1*coefficients[0];
-            final_color[1]= 0*1*coefficients[0];
-            final_color[2]= 0*1*coefficients[0];
+                r = 0;
+                g = 0;
+                b = 0;
 
-            }else{
+            } else {
 
-            final_color[0]= 1*1*coefficients[0];
-            final_color[1]= 1*1*coefficients[0];
-            final_color[2]= 1*1*coefficients[0];
+                r = 1;
+                g = 1;
+                b = 1;
 
             }
+
+
+            final_color[0] = r * 1 * coefficients[0];
+            final_color[1] = g * 1 * coefficients[0];
+            final_color[2] = b * 1 * coefficients[0];
 
             return t;
 
