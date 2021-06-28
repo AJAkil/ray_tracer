@@ -320,14 +320,14 @@ void drawUpperSphere(double radius, int slices, int stacks, double shiftBy) {
     }
 }
 
-void capture(){
+void capture() {
 
-    cout<<"number of objects: "<<objects.size()<<endl;
+    cout << "number of objects: " << objects.size() << endl;
 
     bitmap_image image((int) image_width, (int) image_height);
 
     // setting up the image
-    cout<<"calling capture"<<endl;
+    cout << "calling capture" << endl;
     for (int i = 0; i < image_width; i++) {
         for (int j = 0; j < image_height; j++) {
             image.set_pixel(i, j, 0, 0, 0);
@@ -335,74 +335,74 @@ void capture(){
     }
 
 
-    double planeDistance = (windowHeight/2.0)/tan(convertDegreeToRadian(view_angle)/2.0);
-    Vector3D topleft = pos + l*planeDistance - r*(windowWidth/2) + u*(windowHeight/2);
-    double du = windowWidth/image_width;
-    double dv = windowHeight/image_height;
+    double planeDistance = (windowHeight / 2.0) / tan(convertDegreeToRadian(view_angle) / 2.0);
+    Vector3D topleft = pos + l * planeDistance - r * (windowWidth / 2) + u * (windowHeight / 2);
+    double du = windowWidth / image_width;
+    double dv = windowHeight / image_height;
 
-    cout<<planeDistance<<" "<<du<<" "<<dv<<endl;
+    cout << planeDistance << " " << du << " " << dv << endl;
     printVector3D(topleft);
 
     // Choose middle of the grid cell
-    topleft = topleft + r*(0.5*du) - u*(0.5*dv);
+    topleft = topleft + r * (0.5 * du) - u * (0.5 * dv);
     printVector3D(topleft);
 
     // the index of the nearest object dummy_color
 
 
-    for(int i = 0; i<image_width; i++){
-        for(int j = 0; j<image_height; j++){
+    for (int i = 0; i < image_width; i++) {
+        for (int j = 0; j < image_height; j++) {
 
 
-                int nearest = -1;
-                double t_min=10000, t;
+            int nearest = -1;
+            double t_min = 10000, t;
 
-                // calculate current pixel vector/point
-                Vector3D currentPixel = topleft + r*(i*du) - u*(j*dv);
-                //printVector3D(currentPixel);
-                Vector3D R_d = {currentPixel.x - pos.x, currentPixel.y - pos.y, currentPixel.z - pos.z};
-                //printVector3D(R_d);
-                // create ray object
-                //Ray* r = new Ray(pos, R_d);
-                //double*  color = new double[3];
+            // calculate current pixel vector/point
+            Vector3D currentPixel = topleft + r * (i * du) - u * (j * dv);
+            //printVector3D(currentPixel);
+            Vector3D R_d = {currentPixel.x - pos.x, currentPixel.y - pos.y, currentPixel.z - pos.z};
+            //printVector3D(R_d);
+            // create ray object
+            //Ray* r = new Ray(pos, R_d);
+            //double*  color = new double[3];
 
-                Ray r(pos, R_d);
-                vector<double> dummy_color;
-                dummy_color.push_back(0);
-                dummy_color.push_back(0);
-                dummy_color.push_back(0);
-                //cout<<getVectorMagnitude(r.dir);
+            Ray r(pos, R_d);
+            vector<double> dummy_color;
+            dummy_color.push_back(0);
+            dummy_color.push_back(0);
+            dummy_color.push_back(0);
+            //cout<<getVectorMagnitude(r.dir);
 
-                // iterating over the objects
-                for(int k = 0; k < objects.size(); k++){
+            // iterating over the objects
+            for (int k = 0; k < objects.size(); k++) {
 
-                    //cout<<"for pixel i and j" << i << " " << j<<endl;
-                    t = objects[k]->intersect(r, dummy_color, 0);
-                    if(t < t_min){
-                        nearest = k; //storing the index of the nearest object
-                        t_min = t;
-                        //cout<<"storing "<<k<<endl;
-                    }
+                //cout<<"for pixel i and j" << i << " " << j<<endl;
+                t = objects[k]->intersect(r, dummy_color, 0);
+                if (t < t_min) {
+                    nearest = k; //storing the index of the nearest object
+                    t_min = t;
+                    //cout<<"storing "<<k<<endl;
                 }
+            }
 
-                // we again call intersect to set the color
-                //if(nearest == 1) cout<<"yes"<<endl;
-                vector<double>color;
-                color.push_back(0);
-                color.push_back(0);
-                color.push_back(0);
+            // we again call intersect to set the color
+            //if(nearest == 1) cout<<"yes"<<endl;
+            vector<double> color;
+            color.push_back(0);
+            color.push_back(0);
+            color.push_back(0);
 
-                if (nearest!= -1){
-                    double temp = objects[nearest]->intersect(r, color, 1);
+            if (nearest != -1) {
+                double temp = objects[nearest]->intersect(r, color, 1);
 
-                    // we set image pixel here
-                    //if(color[2] !=0) cout<<"here the color is : "<<color[1]<<endl;
-                    //cout<<color[0]<<color[1]<<color[2]<<endl;
-                    image.set_pixel(i,j,color[0]*255, color[1]*255, color[2]*255);
-                }
+                // we set image pixel here
+                //if(color[2] !=0) cout<<"here the color is : "<<color[1]<<endl;
+                //cout<<color[0]<<color[1]<<color[2]<<endl;
+                image.set_pixel(i, j, color[0] * 255, color[1] * 255, color[2] * 255);
+            }
 
-                color.clear();
-                dummy_color.clear();
+            color.clear();
+            dummy_color.clear();
 
         }
     }
@@ -760,7 +760,7 @@ void loadData() {
     }
 
     // code for creating the floor object
-    Object *temp;
+    /*Object *temp;
     temp = new Floor(1000, 20); // you can change these values
 
     // Setting the color
@@ -775,6 +775,10 @@ void loadData() {
 
     /*for (int i = 0; i < objects.size(); i++) {
        cout << objects[i]->length << endl;
+    }*/
+
+    /*for(auto & light : lights){
+        cout<<light.light_pos.x<<endl;
     }*/
 
 
@@ -852,9 +856,15 @@ void display() {
     }
     glEnd();*/
 
-    for(int i = 0;i<objects.size();i++){
+    for (int i = 0; i < objects.size(); i++) {
         objects[i]->draw();
     }
+
+    for (int i = 0; i < lights.size(); i++) {
+        lights[i].draw();
+    }
+
+
 
     /*glRotatef(90, 1, 0, 0);
 

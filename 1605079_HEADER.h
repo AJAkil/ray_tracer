@@ -71,6 +71,35 @@ Vector3D getCrossProduct(Vector3D a, Vector3D b) {
     return result;
 }
 
+double get_phong_intensity(double Ia, double Ip, double ka, double kd, double ks, double object_color_comp,
+                           int shine, Vector3D L, Vector3D N, Vector3D R, Vector3D V) {
+
+    double ambient_comp = Ia * object_color_comp * ka;
+    double diffused_comp = Ip * kd * object_color_comp * getDotProduct(L, N);
+    double specular_comp = Ip * ks * pow(getDotProduct(R, V), shine);
+
+    return ambient_comp + diffused_comp + specular_comp;
+
+}
+
+class Light {
+public:
+    Vector3D light_pos{};
+    double color[3]{};
+
+    Light(Vector3D light_coord, double color_x, double color_y, double color_z) {
+        light_pos = light_coord;
+        color[0] = color_x;
+        color[1] = color_y;
+        color[2] = color_z;
+    }
+
+    void draw(){
+        glColor3f(color[0], color[1], color[2]);
+        glVertex3f (light_pos.x, light_pos.y, light_pos.z);
+    }
+};
+
 
 class Ray {
 public:
@@ -92,7 +121,7 @@ public:
     double color[3];
     double coefficients[4]; // reflection coefficients
     int shine; // exponent term of specular component
-    object() {}
+    Object() {}
 
     virtual void draw() {}
 
@@ -127,6 +156,9 @@ public:
 
     virtual double get_t_value() {}
 };
+
+extern vector<Object *> objects;
+extern vector<Light> lights;
 
 class Sphere : public Object {
 
@@ -423,8 +455,10 @@ public:
 
         // we calculate a,b,c and find d
         double a = A * x_d * x_d + B * y_d * y_d + C * z_d * z_d + D * x_d * y_d + E * x_d * z_d + F * y_d * z_d;
+
         double b = 2 * A * x_o * x_d + 2 * B * y_o * y_d + 2 * C * z_o * z_d + D * x_o * y_d + D * y_o * x_d +
                    E * x_o * z_d + E * z_o * x_d + F * y_o * z_d + F * z_o * y_d + G * x_d + H * y_d + I * z_d;
+
         double c = A * x_o * x_o + B * y_o * y_o + C * z_o * z_o + D * x_o * y_o + E * x_o * z_o + F * y_o * z_o +
                    G * x_o + H * y_o + I * z_o + J;
 
@@ -452,7 +486,7 @@ public:
 
         // if t_neg > 0 and point 2 is valid return t_neg --> else same for t_pos > 0 and point 1 is valid ---> non intersection
 
-        if (t_neg > 0 && is_inside_cube(poi_neg)){
+        if (t_neg > 0 && is_inside_cube(poi_neg)) {
 
             // setting the color of the pixel of intersection
             final_color[0] = color[0] * 1 * coefficients[0];
@@ -461,7 +495,7 @@ public:
 
             return t_neg;
 
-        }else if (t_pos > 0 && is_inside_cube(poi_pos)){
+        } else if (t_pos > 0 && is_inside_cube(poi_pos)) {
 
             // setting the color of the pixel of intersection
             final_color[0] = color[0] * 1 * coefficients[0];
@@ -470,7 +504,7 @@ public:
 
             return t_pos;
 
-        } else{
+        } else {
             return 10000000;
         }
 
@@ -628,6 +662,7 @@ public:
 
     }
 
+
     virtual double intersect(Ray &r, vector<double> &final_color, int level) {
 
         Vector3D normal = {0, 0, 1};
@@ -645,34 +680,114 @@ public:
             (reference_point.y <= poi.y && poi.y <= -1 * reference_point.y)) {
 
             // setting the color of the pixel of intersection
-            //cout<<"here"<<endl;
 
-            // set the color of the floor here
-            int x = (poi.x - reference_point.x) / length;
-            int y = (poi.y - reference_point.y) / length;
+            if (level == 0) return t;
 
-            double r = 0, g = 0, b = 0;
+            // if level is not 0 then calculate the required lighting components here
 
-            if ((x + y) % 2 == 0) {
+            // first we calculate the normal function here and normalize the vector
+            Vector3D N = getUnitVector(normal);
 
-                r = 0;
-                g = 0;
-                b = 0;
+            // We loop over the light object
+            for (int i = 0; i < lights.size(); i++) {
 
-            } else {
+                Vector3D l_source = lights[i].light_pos;
 
-                r = 1;
-                g = 1;
-                b = 1;
+                // we form the light vector from light source to point of intersection and we get the length
+                Vector3D L = {poi.x - l_source.x, poi.y - l_source.y, poi.z - l_source.z};
+                double LR_length = getVectorMagnitude(L);
+
+                // we form the light ray
+                Ray light_ray = Ray(l_source, L);
+
+                // we et a flag to check whether we have an object in between light ray and light source or not
+                bool is_obstructed = false;
+
+                /**
+                 * We run a for loop to check for each of the objects whether there is another object infront of the object
+                 * we are trying to set the color for. We recursively call the intersect function with level = 0. If
+                 * we obtain a t < LR_length, then it means the main object we are trying to color is being obstructed
+                 * by another object. Then we break the loop and set the is_obstructed flag to true
+                 */
+                for (int j = 0; j < objects.size(); j++) {
+
+                    vector<double> dummy_color;
+                    dummy_color.push_back(0);
+                    dummy_color.push_back(0);
+                    dummy_color.push_back(0);
+
+                    double t_test = objects[i]->intersect(light_ray, dummy_color, 0);
+
+                    // we check the condition here
+                    if (t_test < LR_length) {
+                        is_obstructed = true;
+                        break;
+                    }
+                }
+
+                // outside for loop of objects we set the colors as needed here
+
+                int x = (poi.x - reference_point.x) / length;
+                int y = (poi.y - reference_point.y) / length;
+
+                double red = 0, green = 0, blue = 0;
+
+                if ((x + y) % 2 == 0) {
+
+                    red = 0;
+                    green = 0;
+                    blue = 0;
+
+                } else {
+
+                    red = 1;
+                    green = 1;
+                    blue = 1;
+
+                }
+
+
+                if (is_obstructed) {
+
+                    final_color[0] = red * 1 * coefficients[0];
+                    final_color[1] = green * 1 * coefficients[0];
+                    final_color[2] = blue * 1 * coefficients[0];
+
+                } else {
+                    // we first normalize L
+                    L = getUnitVector(L);
+
+                    // calculate R
+                    double scaler = 2 * getDotProduct(L, N);
+                    Vector3D R = {N.x * scaler - L.x, N.y * scaler - L.y, N.z * scaler - L.z};
+                    R = getUnitVector(R); // normalize R
+
+                    double Ir, Ig, Ib;
+
+                    //ambient, diffused, specular, recursive
+                    Ir = get_phong_intensity(1, lights[i].color[0], coefficients[0], coefficients[1], coefficients[2],
+                                             red, shine, L, N, R, r.dir);
+
+                    Ig = get_phong_intensity(1, lights[i].color[1], coefficients[0], coefficients[1], coefficients[2],
+                                             green, shine, L, N, R, r.dir);
+
+                    Ib = get_phong_intensity(1, lights[i].color[2], coefficients[0], coefficients[1], coefficients[2],
+                                             blue, shine, L, N, R, r.dir);
+
+
+                    final_color[0] = Ir;
+                    final_color[1] = Ig;
+                    final_color[2] = Ib;
+
+
+                }
+
+
+                return t;
+
 
             }
 
-
-            final_color[0] = r * 1 * coefficients[0];
-            final_color[1] = g * 1 * coefficients[0];
-            final_color[2] = b * 1 * coefficients[0];
-
-            return t;
 
         } else return 1000000;
 
@@ -680,17 +795,4 @@ public:
     }
 
 
-};
-
-class Light {
-public:
-    Vector3D light_pos;
-    double color[3];
-
-    Light(Vector3D light_coord, double color_x, double color_y, double color_z) {
-        light_pos = light_coord;
-        color[0] = color_x;
-        color[1] = color_y;
-        color[2] = color_z;
-    }
 };
