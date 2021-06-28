@@ -377,7 +377,7 @@ void capture() {
             for (int k = 0; k < objects.size(); k++) {
 
                 //cout<<"for pixel i and j" << i << " " << j<<endl;
-                t = objects[k]->intersect(r, dummy_color, 0);
+                t = objects[k]->intersect(r, dummy_color, 0, k);
                 if (t < t_min) {
                     nearest = k; //storing the index of the nearest object
                     t_min = t;
@@ -393,7 +393,7 @@ void capture() {
             color.push_back(0);
 
             if (nearest != -1) {
-                double temp = objects[nearest]->intersect(r, color, 1);
+                double temp = objects[nearest]->intersect(r, color, 1, nearest);
 
                 // we set image pixel here
                 //if(color[2] !=0) cout<<"here the color is : "<<color[1]<<endl;
@@ -760,12 +760,12 @@ void loadData() {
     }
 
     // code for creating the floor object
-    /*Object *temp;
+    Object *temp;
     temp = new Floor(1000, 20); // you can change these values
 
     // Setting the color
     temp->setColor(1, 1, 1);
-    temp->setCoEfficients(0.4, 0.2, 0.1, 0.3);
+    temp->setCoEfficients(0.4, 0.2, 0.4, 0.3);
     temp->setShine(5);
 
     objects.push_back(temp);

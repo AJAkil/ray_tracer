@@ -71,14 +71,16 @@ Vector3D getCrossProduct(Vector3D a, Vector3D b) {
     return result;
 }
 
-double get_phong_intensity(double Ia, double Ip, double ka, double kd, double ks, double object_color_comp,
-                           int shine, Vector3D L, Vector3D N, Vector3D R, Vector3D V) {
+double get_phong_intensity( double Ip, double kd, double ks, double object_color_comp,
+                            int shine, Vector3D L, Vector3D N, Vector3D R, Vector3D V) {
 
-    double ambient_comp = Ia * object_color_comp * ka;
-    double diffused_comp = Ip * kd * object_color_comp * getDotProduct(L, N);
-    double specular_comp = Ip * ks * pow(getDotProduct(R, V), shine);
+    double diffused_comp = Ip * kd * object_color_comp * max(getDotProduct(L, N), 0.0);
+    double specular_comp = Ip * ks * max(pow(getDotProduct(R, V), shine), 0.0);
 
-    return ambient_comp + diffused_comp + specular_comp;
+    //cout<<getDotProduct(L, N)<<" "<<getDotProduct(R, V);
+    //cout<<specular_comp<<endl;
+
+    return  diffused_comp + specular_comp;
 
 }
 
@@ -94,9 +96,61 @@ public:
         color[2] = color_z;
     }
 
-    void draw(){
-        glColor3f(color[0], color[1], color[2]);
-        glVertex3f (light_pos.x, light_pos.y, light_pos.z);
+    void draw() {
+        int slices = 50;
+        int stacks = 30;
+        Vector3D points[100][100];
+        int i, j;
+        double h, r;
+        //printVector3D(reference_point);
+        //generate points
+        for (i = 0; i <= stacks; i++) {
+            h = 2 * sin(((double) i / (double) stacks) * (pi / 2));
+            r = 2 * cos(((double) i / (double) stacks) * (pi / 2));
+            for (j = 0; j <= slices; j++) {
+                points[i][j].x = r * cos(((double) j / (double) slices) * 2 * pi) + light_pos.x;
+                points[i][j].y = r * sin(((double) j / (double) slices) * 2 * pi) + light_pos.y;
+                points[i][j].z = h;
+            }
+        }
+
+        //glRotatef(90, 0, 1, 0);
+
+        //glTranslatef(reference_point.x, reference_point.y, reference_point.z)
+        //draw quads using generated points
+        for (i = 0; i < stacks; i++) {
+
+            for (j = 0; j < slices; j++) {
+                glColor3f(color[0], color[1], color[2]);
+                glBegin(GL_QUADS);
+                {
+                    //lower hemisphere
+                    glVertex3f(points[i][j].x, points[i][j].y, -points[i][j].z + light_pos.z);
+                    glVertex3f(points[i][j + 1].x, points[i][j + 1].y, -points[i][j + 1].z + light_pos.z);
+                    glVertex3f(points[i + 1][j + 1].x, points[i + 1][j + 1].y,
+                               -points[i + 1][j + 1].z + light_pos.z);
+                    glVertex3f(points[i + 1][j].x, points[i + 1][j].y, -points[i + 1][j].z + light_pos.z);
+                }
+                glEnd();
+            }
+        }
+
+        for (i = 0; i < stacks; i++) {
+            for (j = 0; j < slices; j++) {
+                glColor3f(color[0], color[1], color[2]);
+                glBegin(GL_QUADS);
+                {
+                    //upper hemisphere
+                    glVertex3f(points[i][j].x, points[i][j].y, points[i][j].z + light_pos.z);
+                    glVertex3f(points[i][j + 1].x, points[i][j + 1].y, points[i][j + 1].z + light_pos.z);
+                    glVertex3f(points[i + 1][j + 1].x, points[i + 1][j + 1].y,
+                               points[i + 1][j + 1].z + light_pos.z);
+                    glVertex3f(points[i + 1][j].x, points[i + 1][j].y, points[i + 1][j].z + light_pos.z);
+                }
+                glEnd();
+            }
+
+        }
     }
 };
 
@@ -148,7 +202,7 @@ public:
         coefficients[3] = recur_reflect;
     }
 
-    virtual double intersect(Ray &r, vector<double> &final_color, int level) {
+    virtual double intersect(Ray &r, vector<double> &final_color, int level, int self_index) {
         return -1.0;
     }
 
@@ -225,7 +279,7 @@ public:
         }
     }
 
-    virtual double intersect(Ray &r, vector<double> &final_color, int level) {
+    virtual double intersect(Ray &r, vector<double> &final_color, int level, int self_index) {
 
         //printVector3D(r.dir);
         Vector3D R_start = {r.start.x - reference_point.x, r.start.y - reference_point.y,
@@ -309,7 +363,7 @@ public:
         glEnd();
     }
 
-    virtual double intersect(Ray &r, vector<double> &final_color, int level) {
+    virtual double intersect(Ray &r, vector<double> &final_color, int level, int self_index) {
 
         double beta, gamma, t, A, D1, D2, D3, x_o, y_o, z_o, x_d, y_d, z_d;
 
@@ -425,7 +479,7 @@ public:
     }
 
 
-    virtual double intersect(Ray &r, vector<double> &final_color, int level) {
+    virtual double intersect(Ray &r, vector<double> &final_color, int level, int self_index) {
 
         double x_o, y_o, z_o, x_d, y_d, z_d;
 
@@ -663,7 +717,7 @@ public:
     }
 
 
-    virtual double intersect(Ray &r, vector<double> &final_color, int level) {
+    virtual double intersect(Ray &r, vector<double> &final_color, int level, int self_index) {
 
         Vector3D normal = {0, 0, 1};
 
@@ -687,6 +741,31 @@ public:
 
             // first we calculate the normal function here and normalize the vector
             Vector3D N = getUnitVector(normal);
+            double Ir, Ig, Ib;
+
+            int x = (poi.x - reference_point.x) / length;
+            int y = (poi.y - reference_point.y) / length;
+
+            double red = 0, green = 0, blue = 0;
+
+            if ((x + y) % 2 == 0) {
+
+                red = 0;
+                green = 0;
+                blue = 0;
+
+            } else {
+
+                red = 1;
+                green = 1;
+                blue = 1;
+
+            }
+
+            // by default we consider that the point is in shadows
+            Ir = red * 1 * coefficients[0];
+            Ig = green * 1 * coefficients[0];
+            Ib = blue * 1 * coefficients[0];
 
             // We loop over the light object
             for (int i = 0; i < lights.size(); i++) {
@@ -694,14 +773,15 @@ public:
                 Vector3D l_source = lights[i].light_pos;
 
                 // we form the light vector from light source to point of intersection and we get the length
-                Vector3D L = {poi.x - l_source.x, poi.y - l_source.y, poi.z - l_source.z};
+                Vector3D L = {l_source.x - poi.x , l_source.y - poi.y, l_source.z - poi.z };
                 double LR_length = getVectorMagnitude(L);
 
                 // we form the light ray
-                Ray light_ray = Ray(l_source, L);
+                Ray light_ray = Ray(poi, L);
 
                 // we et a flag to check whether we have an object in between light ray and light source or not
                 bool is_obstructed = false;
+
 
                 /**
                  * We run a for loop to check for each of the objects whether there is another object infront of the object
@@ -711,49 +791,29 @@ public:
                  */
                 for (int j = 0; j < objects.size(); j++) {
 
+
                     vector<double> dummy_color;
                     dummy_color.push_back(0);
                     dummy_color.push_back(0);
                     dummy_color.push_back(0);
 
-                    double t_test = objects[i]->intersect(light_ray, dummy_color, 0);
+                    double t_test = objects[j]->intersect(light_ray, dummy_color, 0, j);
+
 
                     // we check the condition here
-                    if (t_test < LR_length) {
-                        is_obstructed = true;
-                        break;
+                    if( j != self_index){
+                        if (t_test < LR_length) {
+                            //cout<<"here"<<endl;
+                            is_obstructed = true;
+                            break;
+                        }
                     }
                 }
 
                 // outside for loop of objects we set the colors as needed here
 
-                int x = (poi.x - reference_point.x) / length;
-                int y = (poi.y - reference_point.y) / length;
+                if (!is_obstructed) {
 
-                double red = 0, green = 0, blue = 0;
-
-                if ((x + y) % 2 == 0) {
-
-                    red = 0;
-                    green = 0;
-                    blue = 0;
-
-                } else {
-
-                    red = 1;
-                    green = 1;
-                    blue = 1;
-
-                }
-
-
-                if (is_obstructed) {
-
-                    final_color[0] = red * 1 * coefficients[0];
-                    final_color[1] = green * 1 * coefficients[0];
-                    final_color[2] = blue * 1 * coefficients[0];
-
-                } else {
                     // we first normalize L
                     L = getUnitVector(L);
 
@@ -762,31 +822,26 @@ public:
                     Vector3D R = {N.x * scaler - L.x, N.y * scaler - L.y, N.z * scaler - L.z};
                     R = getUnitVector(R); // normalize R
 
-                    double Ir, Ig, Ib;
-
                     //ambient, diffused, specular, recursive
-                    Ir = get_phong_intensity(1, lights[i].color[0], coefficients[0], coefficients[1], coefficients[2],
-                                             red, shine, L, N, R, r.dir);
+                    Ir += get_phong_intensity(lights[i].color[0],  coefficients[1], coefficients[2],
+                                              red, shine, L, N , R , r.dir * - 1);
 
-                    Ig = get_phong_intensity(1, lights[i].color[1], coefficients[0], coefficients[1], coefficients[2],
-                                             green, shine, L, N, R, r.dir);
+                    Ig += get_phong_intensity(lights[i].color[1],  coefficients[1], coefficients[2],
+                                              green, shine, L, N, R, r.dir * - 1);
 
-                    Ib = get_phong_intensity(1, lights[i].color[2], coefficients[0], coefficients[1], coefficients[2],
-                                             blue, shine, L, N, R, r.dir);
-
-
-                    final_color[0] = Ir;
-                    final_color[1] = Ig;
-                    final_color[2] = Ib;
-
+                    Ib += get_phong_intensity(lights[i].color[2],  coefficients[1], coefficients[2],
+                                              blue, shine, L, N , R, r.dir * -1 );
 
                 }
 
-
-                return t;
-
-
             }
+
+
+            final_color[0] = Ir;
+            final_color[1] = Ig;
+            final_color[2] = Ib;
+
+            return t;
 
 
         } else return 1000000;
