@@ -71,8 +71,8 @@ Vector3D getCrossProduct(Vector3D a, Vector3D b) {
     return result;
 }
 
-double get_phong_intensity( double Ip, double kd, double ks, double object_color_comp,
-                            int shine, Vector3D L, Vector3D N, Vector3D R, Vector3D V) {
+double get_phong_intensity(double Ip, double kd, double ks, double object_color_comp,
+                           int shine, Vector3D L, Vector3D N, Vector3D R, Vector3D V) {
 
     double diffused_comp = Ip * kd * object_color_comp * max(getDotProduct(L, N), 0.0);
     double specular_comp = Ip * ks * max(pow(getDotProduct(R, V), shine), 0.0);
@@ -80,7 +80,7 @@ double get_phong_intensity( double Ip, double kd, double ks, double object_color
     //cout<<getDotProduct(L, N)<<" "<<getDotProduct(R, V);
     //cout<<specular_comp<<endl;
 
-    return  diffused_comp + specular_comp;
+    return diffused_comp + specular_comp;
 
 }
 
@@ -206,7 +206,7 @@ public:
         return -1.0;
     }
 
-    virtual Vector3D get_normal_vector() {}
+    virtual Vector3D get_normal_vector(Vector3D poi) {}
 
     virtual double get_t_value() {}
 };
@@ -339,6 +339,14 @@ public:
         return final_t;
     }
 
+    virtual Vector3D get_normal_vector(Vector3D poi) {
+
+        Vector3D normal = {poi.x - reference_point.x, poi.y - reference_point.y, poi.z - reference_point.z};
+
+        return normal;
+
+    }
+
 };
 
 class Triangle : public Object {
@@ -419,6 +427,15 @@ public:
 
             return 1000000;
         }
+
+    }
+
+    virtual Vector3D get_normal_vector(Vector3D poi) {
+        Vector3D side_a = {second_point.x - first_point.x, second_point.y - first_point.y,
+                           second_point.z - first_point.z};
+        Vector3D side_b = {third_point.x - first_point.x, third_point.y - first_point.y, third_point.z - first_point.z};
+
+        return getCrossProduct(side_a, side_b);
 
     }
 };
@@ -666,6 +683,32 @@ public:
         }*/
 
     }
+
+    virtual Vector3D get_normal_vector(Vector3D poi) {
+
+        Vector3D normal = {0.0, 0.0, 0.0};
+
+        // setting up the coefficients
+        double A = eqn_coefficients[0];
+        double B = eqn_coefficients[1];
+        double C = eqn_coefficients[2];
+        double D = eqn_coefficients[3];
+        double E = eqn_coefficients[4];
+        double F = eqn_coefficients[5];
+        double G = eqn_coefficients[6];
+        double H = eqn_coefficients[7];
+        double I = eqn_coefficients[8];
+        double J = eqn_coefficients[9];
+
+        double x = 2 * A * poi.x + D * poi.y + E * poi.z + G;
+        double y = 2 * B * poi.y + D * poi.x + F * poi.z + H;
+        double z = 2 * C * poi.z + E * poi.x + F * poi.y + I;
+
+        normal = {x, y, z};
+
+        return normal;
+
+    }
 };
 
 class Floor : public Object {
@@ -773,7 +816,7 @@ public:
                 Vector3D l_source = lights[i].light_pos;
 
                 // we form the light vector from light source to point of intersection and we get the length
-                Vector3D L = {l_source.x - poi.x , l_source.y - poi.y, l_source.z - poi.z };
+                Vector3D L = {l_source.x - poi.x, l_source.y - poi.y, l_source.z - poi.z};
                 double LR_length = getVectorMagnitude(L);
 
                 // we form the light ray
@@ -801,7 +844,7 @@ public:
 
 
                     // we check the condition here
-                    if( j != self_index){
+                    if (j != self_index) {
                         if (t_test < LR_length) {
                             //cout<<"here"<<endl;
                             is_obstructed = true;
@@ -823,14 +866,14 @@ public:
                     R = getUnitVector(R); // normalize R
 
                     //ambient, diffused, specular, recursive
-                    Ir += get_phong_intensity(lights[i].color[0],  coefficients[1], coefficients[2],
-                                              red, shine, L, N , R , r.dir * - 1);
+                    Ir += get_phong_intensity(lights[i].color[0], coefficients[1], coefficients[2],
+                                              red, shine, L, N, R, r.dir * -1);
 
-                    Ig += get_phong_intensity(lights[i].color[1],  coefficients[1], coefficients[2],
-                                              green, shine, L, N, R, r.dir * - 1);
+                    Ig += get_phong_intensity(lights[i].color[1], coefficients[1], coefficients[2],
+                                              green, shine, L, N, R, r.dir * -1);
 
-                    Ib += get_phong_intensity(lights[i].color[2],  coefficients[1], coefficients[2],
-                                              blue, shine, L, N , R, r.dir * -1 );
+                    Ib += get_phong_intensity(lights[i].color[2], coefficients[1], coefficients[2],
+                                              blue, shine, L, N, R, r.dir * -1);
 
                 }
 
