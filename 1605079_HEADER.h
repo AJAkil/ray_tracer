@@ -75,7 +75,7 @@ double get_phong_intensity(double Ip, double kd, double ks, double object_color_
                            int shine, Vector3D L, Vector3D N, Vector3D R, Vector3D V) {
 
     double diffused_comp = Ip * kd * object_color_comp * max(getDotProduct(L, N), 0.0);
-    double specular_comp = Ip * ks * object_color_comp * max(pow(getDotProduct(R, V), shine), 0.0);
+    double specular_comp = Ip * ks  * max(pow(getDotProduct(R, V), shine), 0.0);
 
     //cout<<getDotProduct(L, N)<<" "<<getDotProduct(R, V);
     //cout<<specular_comp<<endl;
@@ -226,13 +226,18 @@ Vector3D calculate_color(double red, double green, double blue, Vector3D N, Vect
     for (int i = 0; i < lights.size(); i++) {
 
         Vector3D l_source = lights[i].light_pos;
+        //cout<<"after getting light source"<<endl;
 
         // we form the light vector from light source to point of intersection and we get the length
         Vector3D L = {l_source.x - poi.x, l_source.y - poi.y, l_source.z - poi.z};
         double LR_length = getVectorMagnitude(L);
 
+        //cout<<"after gettinng L and L.len()"<<endl;
+
         // we form the light ray
         Ray light_ray = Ray(poi, L);
+
+        //cout<<"after getting light ray"<<endl;
 
         // we et a flag to check whether we have an object in between light ray and light source or not
         bool is_obstructed = false;
@@ -250,11 +255,16 @@ Vector3D calculate_color(double red, double green, double blue, Vector3D N, Vect
             dummy_color.push_back(0);
             dummy_color.push_back(0);
 
+            //cout<<" before intersect call inside"<<endl;
             double t_test = objects[j]->intersect(light_ray, dummy_color, 0, j);
+            //cout<<" after intersect call inside"<<endl;
 
             // we check the condition here
             if (j != self_index) {
+                //cout<<" j!= self_index "<<endl;
                 if (t_test < LR_length) {
+
+                    //cout<<"obstruction condition"<<endl;
                     is_obstructed = true;
                     break;
                 }
@@ -407,14 +417,30 @@ public:
 
         //cout<<"In sphere intersect"<<endl;
 
+        if(level == 0) return final_t;
+
+        Vector3D poi = {r.start.x + final_t * r.dir.x, r.start.y + final_t * r.dir.y, r.start.z + final_t * r.dir.z};
+
+        Vector3D N = get_normal_vector(poi);
+        N = getUnitVector(N);
+//
+        Vector3D light_components = calculate_color(color[0], color[1], color[2], N, r.dir, poi, self_index, shine,
+                                                    coefficients[0],
+                                                    coefficients[1], coefficients[2]);
+//
+        final_color[0] = light_components.x;
+        final_color[1] = light_components.y;
+        final_color[2] = light_components.z;
+
+
+
         // setting the color of the pixel of intersection
-        final_color[0] = color[0] * 1 * coefficients[0];
-        final_color[1] = color[1] * 1 * coefficients[0];
-        final_color[2] = color[2] * 1 * coefficients[0];
+//        final_color[0] = color[0] * 1 * coefficients[0];
+//        final_color[1] = color[1] * 1 * coefficients[0];
+//        final_color[2] = color[2] * 1 * coefficients[0];
 
         //cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
 
-        // returning the t_neg for now(not sure here
         return final_t;
     }
 
@@ -493,11 +519,26 @@ public:
 
         if (beta + gamma < 1 && beta > 0 && gamma > 0 && t > 0) {
 
-            final_color[0] = color[0] * 1 * coefficients[0];
-            final_color[1] = color[1] * 1 * coefficients[0];
-            final_color[2] = color[2] * 1 * coefficients[0];
+            if(level == 0 ) return t;
 
-            //cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
+            Vector3D poi = {r.start.x + t * r.dir.x, r.start.y + t * r.dir.y, r.start.z + t * r.dir.z};
+
+            //cout<<"before normal calculation"<<endl;
+            Vector3D N = get_normal_vector(poi);
+            N = getUnitVector(N);
+            //cout<<"after normal calculation"<<endl;
+//
+            Vector3D light_components = calculate_color(color[0], color[1], color[2], N, r.dir, poi, self_index, shine,
+                                                        coefficients[0],
+                                                        coefficients[1], coefficients[2]);
+//
+            final_color[0] = light_components.x;
+            final_color[1] = light_components.y;
+            final_color[2] = light_components.z;
+
+//            final_color[0] = color[0] * 1 * coefficients[0];
+//            final_color[1] = color[1] * 1 * coefficients[0];
+//            final_color[2] = color[2] * 1 * coefficients[0];
 
             // returning the final_t
             return t;
@@ -510,9 +551,11 @@ public:
     }
 
     virtual Vector3D get_normal_vector(Vector3D poi) {
+
         Vector3D side_a = {second_point.x - first_point.x, second_point.y - first_point.y,
                            second_point.z - first_point.z};
-        Vector3D side_b = {third_point.x - first_point.x, third_point.y - first_point.y, third_point.z - first_point.z};
+        Vector3D side_b = {third_point.x - first_point.x, third_point.y - first_point.y,
+                           third_point.z - first_point.z};
 
         return getCrossProduct(side_a, side_b);
 
@@ -638,19 +681,54 @@ public:
 
         if (t_neg > 0 && is_inside_cube(poi_neg)) {
 
+            if(level == 0 ) return t_neg;
+
+            Vector3D poi = {r.start.x + t_neg * r.dir.x, r.start.y + t_neg * r.dir.y, r.start.z + t_neg * r.dir.z};
+
+            //cout<<"before normal calculation"<<endl;
+            Vector3D N = get_normal_vector(poi);
+            N = getUnitVector(N);
+            //cout<<"after normal calculation"<<endl;
+//
+            Vector3D light_components = calculate_color(color[0], color[1], color[2], N, r.dir, poi, self_index, shine,
+                                                        coefficients[0],
+                                                        coefficients[1], coefficients[2]);
+//
+            final_color[0] = light_components.x;
+            final_color[1] = light_components.y;
+            final_color[2] = light_components.z;
+
             // setting the color of the pixel of intersection
-            final_color[0] = color[0] * 1 * coefficients[0];
-            final_color[1] = color[1] * 1 * coefficients[0];
-            final_color[2] = color[2] * 1 * coefficients[0];
+//            final_color[0] = color[0] * 1 * coefficients[0];
+//            final_color[1] = color[1] * 1 * coefficients[0];
+//            final_color[2] = color[2] * 1 * coefficients[0];
 
             return t_neg;
 
         } else if (t_pos > 0 && is_inside_cube(poi_pos)) {
 
+            if(level == 0) return t_pos;
+
+
+            Vector3D poi = {r.start.x + t_pos * r.dir.x, r.start.y + t_pos * r.dir.y, r.start.z + t_pos * r.dir.z};
+
+            //cout<<"before normal calculation"<<endl;
+            Vector3D N = get_normal_vector(poi);
+            N = getUnitVector(N);
+            //cout<<"after normal calculation"<<endl;
+//
+            Vector3D light_components = calculate_color(color[0], color[1], color[2], N, r.dir, poi, self_index, shine,
+                                                        coefficients[0],
+                                                        coefficients[1], coefficients[2]);
+//
+            final_color[0] = light_components.x;
+            final_color[1] = light_components.y;
+            final_color[2] = light_components.z;
+
             // setting the color of the pixel of intersection
-            final_color[0] = color[0] * 1 * coefficients[0];
-            final_color[1] = color[1] * 1 * coefficients[0];
-            final_color[2] = color[2] * 1 * coefficients[0];
+//            final_color[0] = color[0] * 1 * coefficients[0];
+//            final_color[1] = color[1] * 1 * coefficients[0];
+//            final_color[2] = color[2] * 1 * coefficients[0];
 
             return t_pos;
 
@@ -885,7 +963,7 @@ public:
             }
 
             // by default we consider that the point is in shadows
-            Ir = red * 1 * coefficients[0];
+            /*Ir = red * 1 * coefficients[0];
             Ig = green * 1 * coefficients[0];
             Ib = blue * 1 * coefficients[0];
 
@@ -904,12 +982,12 @@ public:
                 // we et a flag to check whether we have an object in between light ray and light source or not
                 bool is_obstructed = false;
 
-                /**
+                *//**
                  * We run a for loop to check for each of the objects whether there is another object infront of the object
                  * we are trying to set the color for. We recursively call the intersect function with level = 0. If
                  * we obtain a t < LR_length, then it means the main object we are trying to color is being obstructed
                  * by another object. Then we break the loop and set the is_obstructed flag to true
-                 */
+                 *//*
                 for (int j = 0; j < objects.size(); j++) {
 
                     vector<double> dummy_color;
@@ -957,7 +1035,15 @@ public:
 
             final_color[0] = Ir;
             final_color[1] = Ig;
-            final_color[2] = Ib;
+            final_color[2] = Ib;*/
+
+            Vector3D light_components = calculate_color(red, green, blue, N, r.dir, poi, self_index, shine,
+                                                        coefficients[0],
+                                                        coefficients[1], coefficients[2]);
+
+            final_color[0] = light_components.x;
+            final_color[1] = light_components.y;
+            final_color[2] = light_components.z;
 
             return t;
 
