@@ -407,7 +407,7 @@ void capture() {
         }
     }
 
-    image.save_image("E:\\ACADEMICS\\4-1\\Lab\\Graphics\\Ray-Tracing\\Problem-1\\test_akil.bmp");
+    image.save_image("C:\\Users\\ragnarok_79\\Documents\\Important Docs\\Academics\\4-1\\Lab\\Graphics\\Ray-Tracer\\ray_tracer\\test_akil.bmp");
 }
 
 void drawLowerSphere(double radius, int slices, int stacks, double shiftBy) {
@@ -612,7 +612,7 @@ void drawBulletsOnPlane() {
 
 void loadData() {
     cout << "out" << endl;
-    readFile("E:\\ACADEMICS\\4-1\\Lab\\Graphics\\Ray-Tracing\\Problem-1\\scene_test.txt");
+    readFile("C:\\Users\\ragnarok_79\\Documents\\Important Docs\\Academics\\4-1\\Lab\\Graphics\\Ray-Tracer\\ray_tracer\\scene_test.txt");
 
     // Reading in the data
     vector<string> lines;
@@ -765,7 +765,7 @@ void loadData() {
 
     // Setting the color
     temp->setColor(1, 1, 1);
-    temp->setCoEfficients(0.4, 0.2, 0.4, 0.3);
+    temp->setCoEfficients(0.4, 0.2, 0.3, 0.3);
     temp->setShine(5);
 
     objects.push_back(temp);

@@ -75,7 +75,7 @@ double get_phong_intensity(double Ip, double kd, double ks, double object_color_
                            int shine, Vector3D L, Vector3D N, Vector3D R, Vector3D V) {
 
     double diffused_comp = Ip * kd * object_color_comp * max(getDotProduct(L, N), 0.0);
-    double specular_comp = Ip * ks * max(pow(getDotProduct(R, V), shine), 0.0);
+    double specular_comp = Ip * ks * object_color_comp * max(pow(getDotProduct(R, V), shine), 0.0);
 
     //cout<<getDotProduct(L, N)<<" "<<getDotProduct(R, V);
     //cout<<specular_comp<<endl;
@@ -213,6 +213,85 @@ public:
 
 extern vector<Object *> objects;
 extern vector<Light> lights;
+
+Vector3D calculate_color(double red, double green, double blue, Vector3D N, Vector3D V, Vector3D poi, int self_index,
+                         int shine, double ka, double kd, double ks) {
+
+    // by default we consider that the point is in shadows
+    double Ir = red * 1 * ka;
+    double Ig = green * 1 * ka;
+    double Ib = blue * 1 * ka;
+
+    // We loop over the light object
+    for (int i = 0; i < lights.size(); i++) {
+
+        Vector3D l_source = lights[i].light_pos;
+
+        // we form the light vector from light source to point of intersection and we get the length
+        Vector3D L = {l_source.x - poi.x, l_source.y - poi.y, l_source.z - poi.z};
+        double LR_length = getVectorMagnitude(L);
+
+        // we form the light ray
+        Ray light_ray = Ray(poi, L);
+
+        // we et a flag to check whether we have an object in between light ray and light source or not
+        bool is_obstructed = false;
+
+        /**
+         * We run a for loop to check for each of the objects whether there is another object infront of the object
+         * we are trying to set the color for. We recursively call the intersect function with level = 0. If
+         * we obtain a t < LR_length, then it means the main object we are trying to color is being obstructed
+         * by another object. Then we break the loop and set the is_obstructed flag to true
+         */
+        for (int j = 0; j < objects.size(); j++) {
+
+            vector<double> dummy_color;
+            dummy_color.push_back(0);
+            dummy_color.push_back(0);
+            dummy_color.push_back(0);
+
+            double t_test = objects[j]->intersect(light_ray, dummy_color, 0, j);
+
+            // we check the condition here
+            if (j != self_index) {
+                if (t_test < LR_length) {
+                    is_obstructed = true;
+                    break;
+                }
+            }
+        }
+
+        // outside for loop of objects we set the colors as needed here
+
+        if (!is_obstructed) {
+
+            // we first normalize L
+            L = getUnitVector(L);
+
+            // calculate R
+            double scaler = 2 * getDotProduct(L, N);
+            Vector3D R = {N.x * scaler - L.x, N.y * scaler - L.y, N.z * scaler - L.z};
+            R = getUnitVector(R); // normalize R
+
+            //ambient, diffused, specular, recursive
+            Ir += get_phong_intensity(lights[i].color[0], kd, ks,
+                                      red, shine, L, N, R, V * -1);
+
+            Ig += get_phong_intensity(lights[i].color[1], kd, ks,
+                                      green, shine, L, N, R, V * -1);
+
+            Ib += get_phong_intensity(lights[i].color[2], kd, ks,
+                                      blue, shine, L, N, R, V * -1);
+
+        }
+
+    }
+
+    Vector3D light_comps = {Ir, Ig, Ib};
+
+    return light_comps;
+}
+
 
 class Sphere : public Object {
 
@@ -825,7 +904,6 @@ public:
                 // we et a flag to check whether we have an object in between light ray and light source or not
                 bool is_obstructed = false;
 
-
                 /**
                  * We run a for loop to check for each of the objects whether there is another object infront of the object
                  * we are trying to set the color for. We recursively call the intersect function with level = 0. If
@@ -834,7 +912,6 @@ public:
                  */
                 for (int j = 0; j < objects.size(); j++) {
 
-
                     vector<double> dummy_color;
                     dummy_color.push_back(0);
                     dummy_color.push_back(0);
@@ -842,11 +919,9 @@ public:
 
                     double t_test = objects[j]->intersect(light_ray, dummy_color, 0, j);
 
-
                     // we check the condition here
                     if (j != self_index) {
                         if (t_test < LR_length) {
-                            //cout<<"here"<<endl;
                             is_obstructed = true;
                             break;
                         }
