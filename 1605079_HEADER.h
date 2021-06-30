@@ -213,14 +213,23 @@ public:
 
 extern vector<Object *> objects;
 extern vector<Light> lights;
+extern double recursion_level;
 
-Vector3D calculate_color(double red, double green, double blue, Vector3D N, Vector3D V, Vector3D poi, int self_index,
+struct carrier{
+    double Ir, Ig, Ib;
+    Vector3D R;
+};
+
+typedef carrier carrier;
+
+carrier calculate_color(double red, double green, double blue, Vector3D N, Vector3D V, Vector3D poi, int self_index,
                          int shine, double ka, double kd, double ks) {
 
     // by default we consider that the point is in shadows
     double Ir = red * 1 * ka;
     double Ig = green * 1 * ka;
     double Ib = blue * 1 * ka;
+    Vector3D R = {0,0,0};
 
     // We loop over the light object
     for (int i = 0; i < lights.size(); i++) {
@@ -280,7 +289,7 @@ Vector3D calculate_color(double red, double green, double blue, Vector3D N, Vect
 
             // calculate R
             double scaler = 2 * getDotProduct(L, N);
-            Vector3D R = {N.x * scaler - L.x, N.y * scaler - L.y, N.z * scaler - L.z};
+            R = {N.x * scaler - L.x, N.y * scaler - L.y, N.z * scaler - L.z};
             R = getUnitVector(R); // normalize R
 
             //ambient, diffused, specular, recursive
@@ -297,9 +306,9 @@ Vector3D calculate_color(double red, double green, double blue, Vector3D N, Vect
 
     }
 
-    Vector3D light_comps = {Ir, Ig, Ib};
+    carrier info = {Ir, Ig, Ib, R};
 
-    return light_comps;
+    return info;
 }
 
 
@@ -424,13 +433,70 @@ public:
         Vector3D N = get_normal_vector(poi);
         N = getUnitVector(N);
 //
-        Vector3D light_components = calculate_color(color[0], color[1], color[2], N, r.dir, poi, self_index, shine,
+        carrier coloring_info = calculate_color(color[0], color[1], color[2], N, r.dir, poi, self_index, shine,
                                                     coefficients[0],
                                                     coefficients[1], coefficients[2]);
+
+        double Ir, Ig, Ib;
 //
-        final_color[0] = light_components.x;
-        final_color[1] = light_components.y;
-        final_color[2] = light_components.z;
+        Ir = coloring_info.Ir;
+        Ig = coloring_info.Ig;
+        Ib = coloring_info.Ib;
+
+
+        Vector3D R = coloring_info.R;
+
+            //controlling recursion upto a certain level
+            if(level >= (int) recursion_level) return final_t;
+
+            if (level < (int) recursion_level){
+
+                Vector3D start = {poi.x + R.x * 1, poi.y + R.y * 1, poi.z + R.z * 1};
+                Ray reflected_ray = Ray(start, R);
+
+                double t_min_reflection = 10000, t_reflection, nearest_reflection = -1;
+
+                // looping to find the nearest object for reflected ray
+                for(int obj_indx = 0; obj_indx < objects.size(); obj_indx++){
+
+                    vector<double> dummy_color_reflection;
+                    dummy_color_reflection.push_back(0);
+                    dummy_color_reflection.push_back(0);
+                    dummy_color_reflection.push_back(0);
+
+                    t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0, obj_indx);
+
+                    if (t_reflection < t_min_reflection) {
+                        nearest_reflection = obj_indx; //storing the index of the nearest object
+                        t_min_reflection = t_reflection;
+                    }
+
+                }
+
+                // then we do the reflection call
+                vector<double> reflected_color;
+                reflected_color.push_back(0);
+                reflected_color.push_back(0);
+                reflected_color.push_back(0);
+
+                // if we find a nearest one
+                if(nearest_reflection != -1){
+
+                    double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1, nearest_reflection);
+
+                    //cout<<reflected_color[0]<<" "<<reflected_color[1]<<" "<<reflected_color[2]<<endl;
+                    Ir += reflected_color[0] * coefficients[3];
+                    Ig += reflected_color[1] * coefficients[3];
+                    Ib += reflected_color[2] * coefficients[3];
+
+                }
+
+            }
+
+
+            final_color[0] = Ir;
+            final_color[1] = Ig;
+            final_color[2] = Ib;
 
 
 
@@ -517,7 +583,10 @@ public:
         gamma = D2 / A;
         t = D3 / A;
 
+
         if (beta + gamma < 1 && beta > 0 && gamma > 0 && t > 0) {
+
+            double Ir, Ig, Ib;
 
             if(level == 0 ) return t;
 
@@ -528,17 +597,67 @@ public:
             N = getUnitVector(N);
             //cout<<"after normal calculation"<<endl;
 //
-            Vector3D light_components = calculate_color(color[0], color[1], color[2], N, r.dir, poi, self_index, shine,
+            carrier coloring_info = calculate_color(color[0], color[1], color[2], N, r.dir, poi, self_index, shine,
                                                         coefficients[0],
                                                         coefficients[1], coefficients[2]);
 //
-            final_color[0] = light_components.x;
-            final_color[1] = light_components.y;
-            final_color[2] = light_components.z;
+            Ir = coloring_info.Ir;
+            Ig = coloring_info.Ig;
+            Ib = coloring_info.Ib;
 
-//            final_color[0] = color[0] * 1 * coefficients[0];
-//            final_color[1] = color[1] * 1 * coefficients[0];
-//            final_color[2] = color[2] * 1 * coefficients[0];
+            Vector3D R = coloring_info.R;
+
+            //controlling recursion upto a certain level
+            if(level >= (int) recursion_level) return t;
+
+            if (level < (int) recursion_level){
+
+                Vector3D start = {poi.x + R.x * 1, poi.y + R.y * 1, poi.z + R.z * 1};
+                Ray reflected_ray = Ray(start, R);
+
+                double t_min_reflection = 10000, t_reflection, nearest_reflection = -1;
+
+                // looping to find the nearest object for reflected ray
+                for(int obj_indx = 0; obj_indx < objects.size(); obj_indx++){
+
+                    vector<double> dummy_color_reflection;
+                    dummy_color_reflection.push_back(0);
+                    dummy_color_reflection.push_back(0);
+                    dummy_color_reflection.push_back(0);
+
+                    t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0, obj_indx);
+
+                    if (t_reflection < t_min_reflection) {
+                        nearest_reflection = obj_indx; //storing the index of the nearest object
+                        t_min_reflection = t_reflection;
+                    }
+
+                }
+
+                // then we do the reflection call
+                vector<double> reflected_color;
+                reflected_color.push_back(0);
+                reflected_color.push_back(0);
+                reflected_color.push_back(0);
+
+                // if we find a nearest one
+                if(nearest_reflection != -1){
+
+                    double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1, nearest_reflection);
+
+                    //cout<<reflected_color[0]<<" "<<reflected_color[1]<<" "<<reflected_color[2]<<endl;
+                    Ir += reflected_color[0] * coefficients[3];
+                    Ig += reflected_color[1] * coefficients[3];
+                    Ib += reflected_color[2] * coefficients[3];
+
+                }
+
+            }
+
+
+            final_color[0] = Ir;
+            final_color[1] = Ig;
+            final_color[2] = Ib;
 
             // returning the final_t
             return t;
@@ -681,6 +800,8 @@ public:
 
         if (t_neg > 0 && is_inside_cube(poi_neg)) {
 
+            double Ir, Ig, Ib;
+
             if(level == 0 ) return t_neg;
 
             Vector3D poi = {r.start.x + t_neg * r.dir.x, r.start.y + t_neg * r.dir.y, r.start.z + t_neg * r.dir.z};
@@ -690,13 +811,67 @@ public:
             N = getUnitVector(N);
             //cout<<"after normal calculation"<<endl;
 //
-            Vector3D light_components = calculate_color(color[0], color[1], color[2], N, r.dir, poi, self_index, shine,
+            carrier coloring_info = calculate_color(color[0], color[1], color[2], N, r.dir, poi, self_index, shine,
                                                         coefficients[0],
                                                         coefficients[1], coefficients[2]);
 //
-            final_color[0] = light_components.x;
-            final_color[1] = light_components.y;
-            final_color[2] = light_components.z;
+            Ir = coloring_info.Ir;
+            Ig = coloring_info.Ig;
+            Ib = coloring_info.Ib;
+
+
+            Vector3D R = coloring_info.R;
+
+            //controlling recursion upto a certain level
+            if(level >= (int) recursion_level) return t_neg;
+
+            if (level < (int) recursion_level){
+
+                Vector3D start = {poi.x + R.x * 1, poi.y + R.y * 1, poi.z + R.z * 1};
+                Ray reflected_ray = Ray(start, R);
+
+                double t_min_reflection = 10000, t_reflection, nearest_reflection = -1;
+
+                // looping to find the nearest object for reflected ray
+                for(int obj_indx = 0; obj_indx < objects.size(); obj_indx++){
+
+                    vector<double> dummy_color_reflection;
+                    dummy_color_reflection.push_back(0);
+                    dummy_color_reflection.push_back(0);
+                    dummy_color_reflection.push_back(0);
+
+                    t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0, obj_indx);
+
+                    if (t_reflection < t_min_reflection) {
+                        nearest_reflection = obj_indx; //storing the index of the nearest object
+                        t_min_reflection = t_reflection;
+                    }
+
+                }
+
+                // then we do the reflection call
+                vector<double> reflected_color;
+                reflected_color.push_back(0);
+                reflected_color.push_back(0);
+                reflected_color.push_back(0);
+
+                // if we find a nearest one
+                if(nearest_reflection != -1){
+
+                    double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1, nearest_reflection);
+
+                    //cout<<reflected_color[0]<<" "<<reflected_color[1]<<" "<<reflected_color[2]<<endl;
+                    Ir += reflected_color[0] * coefficients[3];
+                    Ig += reflected_color[1] * coefficients[3];
+                    Ib += reflected_color[2] * coefficients[3];
+
+                }
+
+            }
+
+            final_color[0] = Ir;
+            final_color[1] = Ig;
+            final_color[2] = Ib;
 
             // setting the color of the pixel of intersection
 //            final_color[0] = color[0] * 1 * coefficients[0];
@@ -706,6 +881,8 @@ public:
             return t_neg;
 
         } else if (t_pos > 0 && is_inside_cube(poi_pos)) {
+
+            double Ir, Ig, Ib;
 
             if(level == 0) return t_pos;
 
@@ -717,18 +894,69 @@ public:
             N = getUnitVector(N);
             //cout<<"after normal calculation"<<endl;
 //
-            Vector3D light_components = calculate_color(color[0], color[1], color[2], N, r.dir, poi, self_index, shine,
+            carrier coloring_info = calculate_color(color[0], color[1], color[2], N, r.dir, poi, self_index, shine,
                                                         coefficients[0],
                                                         coefficients[1], coefficients[2]);
 //
-            final_color[0] = light_components.x;
-            final_color[1] = light_components.y;
-            final_color[2] = light_components.z;
+            Ir = coloring_info.Ir;
+            Ig = coloring_info.Ig;
+            Ib = coloring_info.Ib;
 
-            // setting the color of the pixel of intersection
-//            final_color[0] = color[0] * 1 * coefficients[0];
-//            final_color[1] = color[1] * 1 * coefficients[0];
-//            final_color[2] = color[2] * 1 * coefficients[0];
+
+            Vector3D R = coloring_info.R;
+
+            //controlling recursion upto a certain level
+            if(level >= (int) recursion_level) return t_neg;
+
+            if (level < (int) recursion_level){
+
+                Vector3D start = {poi.x + R.x * 1, poi.y + R.y * 1, poi.z + R.z * 1};
+                Ray reflected_ray = Ray(start, R);
+
+                double t_min_reflection = 10000, t_reflection, nearest_reflection = -1;
+
+                // looping to find the nearest object for reflected ray
+                for(int obj_indx = 0; obj_indx < objects.size(); obj_indx++){
+
+                    vector<double> dummy_color_reflection;
+                    dummy_color_reflection.push_back(0);
+                    dummy_color_reflection.push_back(0);
+                    dummy_color_reflection.push_back(0);
+
+                    t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0, obj_indx);
+
+                    if (t_reflection < t_min_reflection) {
+                        nearest_reflection = obj_indx; //storing the index of the nearest object
+                        t_min_reflection = t_reflection;
+                    }
+
+                }
+
+                // then we do the reflection call
+                vector<double> reflected_color;
+                reflected_color.push_back(0);
+                reflected_color.push_back(0);
+                reflected_color.push_back(0);
+
+                // if we find a nearest one
+                if(nearest_reflection != -1){
+
+                    double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1, nearest_reflection);
+
+                    //cout<<reflected_color[0]<<" "<<reflected_color[1]<<" "<<reflected_color[2]<<endl;
+                    Ir += reflected_color[0] * coefficients[3];
+                    Ig += reflected_color[1] * coefficients[3];
+                    Ib += reflected_color[2] * coefficients[3];
+
+                }
+
+            }
+
+            final_color[0] = Ir;
+            final_color[1] = Ig;
+            final_color[2] = Ib;
+
+
 
             return t_pos;
 
@@ -962,71 +1190,134 @@ public:
 
             }
 
-            // by default we consider that the point is in shadows
-            /*Ir = red * 1 * coefficients[0];
-            Ig = green * 1 * coefficients[0];
-            Ib = blue * 1 * coefficients[0];
+            // // by default we consider that the point is in shadows
+            // Ir = red * 1 * coefficients[0];
+            // Ig = green * 1 * coefficients[0];
+            // Ib = blue * 1 * coefficients[0];
+            // Vector3D R = {0.0, 0.0, 0.0};
 
-            // We loop over the light object
-            for (int i = 0; i < lights.size(); i++) {
+            // // We loop over the light object
+            // for (int i = 0; i < lights.size(); i++) {
 
-                Vector3D l_source = lights[i].light_pos;
+            //     Vector3D l_source = lights[i].light_pos;
 
-                // we form the light vector from light source to point of intersection and we get the length
-                Vector3D L = {l_source.x - poi.x, l_source.y - poi.y, l_source.z - poi.z};
-                double LR_length = getVectorMagnitude(L);
+            //     // we form the light vector from light source to point of intersection and we get the length
+            //     Vector3D L = {l_source.x - poi.x, l_source.y - poi.y, l_source.z - poi.z};
+            //     double LR_length = getVectorMagnitude(L);
 
-                // we form the light ray
-                Ray light_ray = Ray(poi, L);
+            //     // we form the light ray
+            //     Ray light_ray = Ray(poi, L);
 
-                // we et a flag to check whether we have an object in between light ray and light source or not
-                bool is_obstructed = false;
+            //     // we et a flag to check whether we have an object in between light ray and light source or not
+            //     bool is_obstructed = false;
 
-                *//**
-                 * We run a for loop to check for each of the objects whether there is another object infront of the object
-                 * we are trying to set the color for. We recursively call the intersect function with level = 0. If
-                 * we obtain a t < LR_length, then it means the main object we are trying to color is being obstructed
-                 * by another object. Then we break the loop and set the is_obstructed flag to true
-                 *//*
-                for (int j = 0; j < objects.size(); j++) {
+            //     /**
+            //      * We run a for loop to check for each of the objects whether there is another object infront of the object
+            //      * we are trying to set the color for. We recursively call the intersect function with level = 0. If
+            //      * we obtain a t < LR_length, then it means the main object we are trying to color is being obstructed
+            //      * by another object. Then we break the loop and set the is_obstructed flag to true
+            //      */
+            //     for (int j = 0; j < objects.size(); j++) {
 
-                    vector<double> dummy_color;
-                    dummy_color.push_back(0);
-                    dummy_color.push_back(0);
-                    dummy_color.push_back(0);
+            //         vector<double> dummy_color;
+            //         dummy_color.push_back(0);
+            //         dummy_color.push_back(0);
+            //         dummy_color.push_back(0);
 
-                    double t_test = objects[j]->intersect(light_ray, dummy_color, 0, j);
+            //         double t_test = objects[j]->intersect(light_ray, dummy_color, 0, j);
 
-                    // we check the condition here
-                    if (j != self_index) {
-                        if (t_test < LR_length) {
-                            is_obstructed = true;
-                            break;
-                        }
+            //         // we check the condition here
+            //         if (j != self_index) {
+            //             if (t_test < LR_length) {
+            //                 is_obstructed = true;
+            //                 break;
+            //             }
+            //         }
+            //     }
+
+            //     // outside for loop of objects we set the colors as needed here
+
+            //     if (!is_obstructed) {
+
+            //         // we first normalize L
+            //         L = getUnitVector(L);
+
+            //         // calculate R
+            //         double scaler = 2 * getDotProduct(L, N);
+            //         R = {N.x * scaler - L.x, N.y * scaler - L.y, N.z * scaler - L.z};
+            //         R = getUnitVector(R); // normalize R
+
+            //         //ambient, diffused, specular, recursive
+            //         Ir += get_phong_intensity(lights[i].color[0], coefficients[1], coefficients[2],
+            //                                   red, shine, L, N, R, r.dir * -1);
+
+            //         Ig += get_phong_intensity(lights[i].color[1], coefficients[1], coefficients[2],
+            //                                   green, shine, L, N, R, r.dir * -1);
+
+            //         Ib += get_phong_intensity(lights[i].color[2], coefficients[1], coefficients[2],
+            //                                   blue, shine, L, N, R, r.dir * -1);
+
+            //     }
+
+            // }
+
+
+            // final_color[0] = Ir;
+            // final_color[1] = Ig;
+            // final_color[2] = Ib;
+
+            carrier coloring_info = calculate_color(red, green, blue, N, r.dir, poi, self_index, shine,
+                                                        coefficients[0],
+                                                        coefficients[1], coefficients[2]);
+
+            Ir = coloring_info.Ir;
+            Ig = coloring_info.Ig;
+            Ib = coloring_info.Ib;
+
+            Vector3D R = coloring_info.R;
+
+            //controlling recursion upto a certain level
+            if(level >= (int) recursion_level) return t;
+
+            if (level < (int) recursion_level){
+
+                Vector3D start = {poi.x + R.x * 1, poi.y + R.y * 1, poi.z + R.z * 1};
+                Ray reflected_ray = Ray(start, R);
+
+                double t_min_reflection = 10000, t_reflection, nearest_reflection = -1;
+
+                // looping to find the nearest object for reflected ray
+                for(int obj_indx = 0; obj_indx < objects.size(); obj_indx++){
+
+                    vector<double> dummy_color_reflection;
+                    dummy_color_reflection.push_back(0);
+                    dummy_color_reflection.push_back(0);
+                    dummy_color_reflection.push_back(0);
+
+                    t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0, obj_indx);
+
+                    if (t_reflection < t_min_reflection) {
+                        nearest_reflection = obj_indx; //storing the index of the nearest object
+                        t_min_reflection = t_reflection;
                     }
+
                 }
 
-                // outside for loop of objects we set the colors as needed here
+                // then we do the reflection call
+                vector<double> reflected_color;
+                reflected_color.push_back(0);
+                reflected_color.push_back(0);
+                reflected_color.push_back(0);
 
-                if (!is_obstructed) {
+                // if we find a nearest one
+                if(nearest_reflection != -1){
 
-                    // we first normalize L
-                    L = getUnitVector(L);
+                    double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1, nearest_reflection);
 
-                    // calculate R
-                    double scaler = 2 * getDotProduct(L, N);
-                    Vector3D R = {N.x * scaler - L.x, N.y * scaler - L.y, N.z * scaler - L.z};
-                    R = getUnitVector(R); // normalize R
-
-                    //ambient, diffused, specular, recursive
-                    Ir += get_phong_intensity(lights[i].color[0], coefficients[1], coefficients[2],
-                                              red, shine, L, N, R, r.dir * -1);
-
-                    Ig += get_phong_intensity(lights[i].color[1], coefficients[1], coefficients[2],
-                                              green, shine, L, N, R, r.dir * -1);
-
-                    Ib += get_phong_intensity(lights[i].color[2], coefficients[1], coefficients[2],
-                                              blue, shine, L, N, R, r.dir * -1);
+                    //cout<<reflected_color[0]<<" "<<reflected_color[1]<<" "<<reflected_color[2]<<endl;
+                    Ir += reflected_color[0] * coefficients[3];
+                    Ig += reflected_color[1] * coefficients[3];
+                    Ib += reflected_color[2] * coefficients[3];
 
                 }
 
@@ -1035,15 +1326,7 @@ public:
 
             final_color[0] = Ir;
             final_color[1] = Ig;
-            final_color[2] = Ib;*/
-
-            Vector3D light_components = calculate_color(red, green, blue, N, r.dir, poi, self_index, shine,
-                                                        coefficients[0],
-                                                        coefficients[1], coefficients[2]);
-
-            final_color[0] = light_components.x;
-            final_color[1] = light_components.y;
-            final_color[2] = light_components.z;
+            final_color[2] = Ib;
 
             return t;
 

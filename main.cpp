@@ -62,6 +62,7 @@ double view_angle = 80;
 
 vector<string> tokenizeString(string s) {
     vector<string> tokens;
+    cout<<s<<endl;
 
     // create the stream
     stringstream tokenizer(s);
@@ -71,6 +72,8 @@ vector<string> tokenizeString(string s) {
     while (getline(tokenizer, token, ' ')) {
         tokens.push_back(token);
     }
+
+    cout<<tokens[0]<<endl;
 
     return tokens;
 }
@@ -103,9 +106,9 @@ void readFile(const char *fileName) {
         newfile.close(); //close the file object.
     }
 
-    /*for (int i = 0; i < fileLines.size(); i++) {
+    for (int i = 0; i < fileLines.size(); i++) {
         cout << fileLines[i] << endl;
-     }*/
+     }
 
 
 }
@@ -320,6 +323,7 @@ void drawUpperSphere(double radius, int slices, int stacks, double shiftBy) {
     }
 }
 
+
 void capture() {
 
     cout << "number of objects: " << objects.size() << endl;
@@ -398,6 +402,29 @@ void capture() {
                 // we set image pixel here
                 //if(color[2] !=0) cout<<"here the color is : "<<color[1]<<endl;
                 //cout<<color[0]<<color[1]<<color[2]<<endl;
+
+                // we clip colors here before we set the pixels here
+                if(color[0] > 1){
+                    color[0] = 1;
+                }else if(color[0] < 0){
+                    color[0] = 0;
+                }
+
+                if(color[1] > 1){
+                    color[1] = 1;
+                }else if(color[1] < 0){
+                    color[1] = 0;
+                }
+
+                if(color[2] > 1){
+                    color[2] = 1;
+                }else if(color[2] < 0){
+                    color[2] = 0;
+                }
+
+
+
+
                 image.set_pixel(i, j, color[0] * 255, color[1] * 255, color[2] * 255);
             }
 
@@ -407,7 +434,7 @@ void capture() {
         }
     }
 
-    image.save_image("C:\\Users\\ragnarok_79\\Documents\\Important Docs\\Academics\\4-1\\Lab\\Graphics\\Ray-Tracer\\ray_tracer\\test_akil.bmp");
+    image.save_image("C:\\Users\\ragnarok_79\\Documents\\Important Docs\\Academics\\4_1\\Lab\\Graphics\\Ray-Tracer\\ray_tracer\\test_akil.bmp");
 }
 
 void drawLowerSphere(double radius, int slices, int stacks, double shiftBy) {
@@ -612,12 +639,14 @@ void drawBulletsOnPlane() {
 
 void loadData() {
     cout << "out" << endl;
-    readFile("C:\\Users\\ragnarok_79\\Documents\\Important Docs\\Academics\\4-1\\Lab\\Graphics\\Ray-Tracer\\ray_tracer\\scene_test.txt");
+    readFile("C:\\Users\\ragnarok_79\\Documents\\Important Docs\\Academics\\4_1\\Lab\\Graphics\\Ray-Tracer\\ray_tracer\\scene_test.txt");
 
     // Reading in the data
     vector<string> lines;
     lines = tokenizeString(fileLines[0]);
     istringstream(lines[0]) >> recursion_level;
+
+    cout<<recursion_level<<endl;
 
     lines = tokenizeString(fileLines[1]);
     istringstream(lines[0]) >> image_width;
