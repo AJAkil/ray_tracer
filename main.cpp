@@ -8,50 +8,16 @@ using namespace std;
 
 double cameraHeight;
 double cameraAngle;
-int drawgrid;
 int drawaxes;
 double angle;
 double camTheta = 0.75;
-double rotateBarrelWithSemiSphere = 0.0;
-double fullRotateBy = 0.0;
-double barrelRotateVerticallyBy = 0.0;
-double barrelRotateAlongOwnAxisBy = 0.0;
-double gunRotationThreshold = 45;
-double rotatationIncrementBy = 0.5;
-double centerSphereRadius = 30;
-double gunSphereRadius = 15;
-double planeSide = 300;
-double cylinderHeight = 100;
-double planeZ = 700;
-double bulletX = 0;
-double bulletY = 0;
-double bulletZ = 0;
-bool drawBullet = false;
 
-
-struct point {
-    double x, y, z;
-
-    inline point operator*(double v) {
-        return {x * v, y * v, z * v};
-    }
-
-    inline point operator+(point p) {
-        return {x + p.x, y + p.y, z + p.z};
-    }
-
-    inline point operator-(point p) {
-        return {x - p.x, y - p.y, z - p.z};
-    }
-
-};
 
 Vector3D pos = {100, 100, 0};
 Vector3D u = {0, 0, 1};
 Vector3D l = {-1 / sqrt(2), -1 / sqrt(2), 0};
 Vector3D r = {-1 / sqrt(2), 1 / sqrt(2), 0};
 double k = 2;
-vector<point> bulletCoordinates;
 vector<string> fileLines;
 vector<Object *> objects;
 vector<Light> lights;
@@ -144,9 +110,6 @@ void camTilt(int modifier) {
     u = u * cos(theta) + (temp_vec * -1) * sin(theta);
 }
 
-void colorZebraPattern(int var) {
-    glColor3f(var % 2, var % 2, var % 2);
-}
 
 void drawAxes() {
     if (drawaxes == 1) {
@@ -166,160 +129,6 @@ void drawAxes() {
             glVertex3f(0, 0, -1500);
         }
         glEnd();
-    }
-}
-
-void drawGrid() {
-    int i;
-    if (drawgrid == 1) {
-        glColor3f(0.6, 0.6, 0.6);    //grey
-        glBegin(GL_LINES);
-        {
-            for (i = -8; i <= 8; i++) {
-
-                if (i == 0)
-                    continue;    //SKIP the MAIN axes
-
-                //lines parallel to Y-axis
-                glVertex3f(i * 10, -90, 0);
-                glVertex3f(i * 10, 90, 0);
-
-                //lines parallel to X-axis
-                glVertex3f(-90, i * 10, 0);
-                glVertex3f(90, i * 10, 0);
-            }
-        }
-        glEnd();
-    }
-}
-
-void drawSquare(double a) {
-    //glColor3f(1.0,0.0,0.0);
-    glBegin(GL_QUADS);
-    {
-        glVertex3f(a, a, 2);
-        glVertex3f(a, -a, 2);
-        glVertex3f(-a, -a, 2);
-        glVertex3f(-a, a, 2);
-    }
-    glEnd();
-}
-
-void drawSquareBullets(double a, double x, double y) {
-    //glColor3f(1.0,0.0,0.0);
-    glBegin(GL_QUADS);
-    {
-        glVertex3f(x + a, y + a, 0);
-        glVertex3f(x + a, y - a, 0);
-        glVertex3f(x - a, y - a, 0);
-        glVertex3f(x - a, y + a, 0);
-    }
-    glEnd();
-}
-
-void drawCircle(double radius, int segments) {
-    int i;
-    struct point points[100];
-    glColor3f(0.7, 0.7, 0.7);
-    //generate points
-    for (i = 0; i <= segments; i++) {
-        points[i].x = radius * cos(((double) i / (double) segments) * 2 * pi);
-        points[i].y = radius * sin(((double) i / (double) segments) * 2 * pi);
-    }
-    //draw segments using generated points
-    for (i = 0; i < segments; i++) {
-        glBegin(GL_LINES);
-        {
-            glVertex3f(points[i].x, points[i].y, 0);
-            glVertex3f(points[i + 1].x, points[i + 1].y, 0);
-        }
-        glEnd();
-    }
-}
-
-void drawSphere(double radius, int slices, int stacks) {
-    struct point points[100][100];
-    int i, j;
-    double h, r;
-    //generate points
-    for (i = 0; i <= stacks; i++) {
-        h = radius * sin(((double) i / (double) stacks) * (pi / 2));
-        r = radius * cos(((double) i / (double) stacks) * (pi / 2));
-        for (j = 0; j <= slices; j++) {
-            points[i][j].x = r * cos(((double) j / (double) slices) * 2 * pi);
-            points[i][j].y = r * sin(((double) j / (double) slices) * 2 * pi);
-            points[i][j].z = h;
-        }
-    }
-
-    glRotatef(90, 0, 1, 0);
-
-    //draw quads using generated points
-    for (i = 0; i < stacks; i++) {
-
-        for (j = 0; j < slices; j++) {
-            colorZebraPattern(j);
-            glBegin(GL_QUADS);
-            {
-                //lower hemisphere
-                glVertex3f(points[i][j].x, points[i][j].y, -points[i][j].z);
-                glVertex3f(points[i][j + 1].x, points[i][j + 1].y, -points[i][j + 1].z);
-                glVertex3f(points[i + 1][j + 1].x, points[i + 1][j + 1].y, -points[i + 1][j + 1].z);
-                glVertex3f(points[i + 1][j].x, points[i + 1][j].y, -points[i + 1][j].z);
-            }
-            glEnd();
-        }
-    }
-
-    //glRotatef(90,0,1,0);
-
-
-    for (i = 0; i < stacks; i++) {
-        for (j = 0; j < slices; j++) {
-            colorZebraPattern(j);
-            glBegin(GL_QUADS);
-            {
-                //upper hemisphere
-
-                glVertex3f(points[i][j].x, points[i][j].y, points[i][j].z);
-                glVertex3f(points[i][j + 1].x, points[i][j + 1].y, points[i][j + 1].z);
-                glVertex3f(points[i + 1][j + 1].x, points[i + 1][j + 1].y, points[i + 1][j + 1].z);
-                glVertex3f(points[i + 1][j].x, points[i + 1][j].y, points[i + 1][j].z);
-            }
-            glEnd();
-        }
-    }
-}
-
-void drawUpperSphere(double radius, int slices, int stacks, double shiftBy) {
-    struct point points[100][100];
-    int i, j;
-    double h, r;
-    //generate points
-    for (i = 0; i <= stacks; i++) {
-        h = radius * sin(((double) i / (double) stacks) * (pi / 2));
-        r = radius * cos(((double) i / (double) stacks) * (pi / 2));
-        for (j = 0; j <= slices; j++) {
-            points[i][j].x = r * cos(((double) j / (double) slices) * 2 * pi);
-            points[i][j].y = r * sin(((double) j / (double) slices) * 2 * pi);
-            points[i][j].z = h + shiftBy;
-        }
-    }
-
-
-    for (i = 0; i < stacks; i++) {
-        for (j = 0; j < slices; j++) {
-            colorZebraPattern(j);
-            glBegin(GL_QUADS);
-            {
-                //upper hemisphere
-                glVertex3f(points[i][j].x, points[i][j].y, points[i][j].z);
-                glVertex3f(points[i][j + 1].x, points[i][j + 1].y, points[i][j + 1].z);
-                glVertex3f(points[i + 1][j + 1].x, points[i + 1][j + 1].y, points[i + 1][j + 1].z);
-                glVertex3f(points[i + 1][j].x, points[i + 1][j].y, points[i + 1][j].z);
-            }
-            glEnd();
-        }
     }
 }
 
@@ -437,40 +246,6 @@ void capture() {
     image.save_image("C:\\Users\\ragnarok_79\\Documents\\Important Docs\\Academics\\4_1\\Lab\\Graphics\\Ray-Tracer\\ray_tracer\\test_akil.bmp");
 }
 
-void drawLowerSphere(double radius, int slices, int stacks, double shiftBy) {
-    struct point points[100][100];
-    int i, j;
-    double h, r;
-    //generate points
-    for (i = 0; i <= stacks; i++) {
-        h = radius * sin(((double) i / (double) stacks) * (pi / 2));
-        r = radius * cos(((double) i / (double) stacks) * (pi / 2));
-        for (j = 0; j <= slices; j++) {
-            points[i][j].x = r * cos(((double) j / (double) slices) * 2 * pi);
-            points[i][j].y = r * sin(((double) j / (double) slices) * 2 * pi);
-            points[i][j].z = h + shiftBy;
-        }
-    }
-
-
-    //draw quads using generated points
-    for (i = 0; i < stacks; i++) {
-
-        for (j = 0; j < slices; j++) {
-            colorZebraPattern(j);
-            glBegin(GL_QUADS);
-            {
-                //lower hemisphere
-                glVertex3f(points[i][j].x, points[i][j].y, -points[i][j].z);
-                glVertex3f(points[i][j + 1].x, points[i][j + 1].y, -points[i][j + 1].z);
-                glVertex3f(points[i + 1][j + 1].x, points[i + 1][j + 1].y, -points[i + 1][j + 1].z);
-                glVertex3f(points[i + 1][j].x, points[i + 1][j].y, -points[i + 1][j].z);
-            }
-            glEnd();
-        }
-    }
-}
-
 void keyboardListener(unsigned char key, int x, int y) {
 
     switch (key) {
@@ -495,44 +270,6 @@ void keyboardListener(unsigned char key, int x, int y) {
             break;
         case '6':
             camTilt(-1);
-            break;
-        case 'g':
-            drawgrid = 1 - drawgrid;
-            break;
-        case 'e':
-            if (rotateBarrelWithSemiSphere < gunRotationThreshold)
-                rotateBarrelWithSemiSphere += rotatationIncrementBy;
-            break;
-        case 'r':
-            if (rotateBarrelWithSemiSphere > -gunRotationThreshold)
-                rotateBarrelWithSemiSphere -= rotatationIncrementBy;
-            break;
-
-        case 'q':
-            if (fullRotateBy < gunRotationThreshold)
-                fullRotateBy += rotatationIncrementBy;
-            break;
-        case 'w':
-            if (fullRotateBy > -gunRotationThreshold)
-                fullRotateBy -= rotatationIncrementBy;
-            break;
-
-        case 'd':
-            if (barrelRotateAlongOwnAxisBy > -gunRotationThreshold)
-                barrelRotateAlongOwnAxisBy -= rotatationIncrementBy;
-            break;
-        case 'f':
-            if (barrelRotateAlongOwnAxisBy < gunRotationThreshold)
-                barrelRotateAlongOwnAxisBy += rotatationIncrementBy;
-            break;
-
-        case 'a':
-            if (barrelRotateVerticallyBy < gunRotationThreshold)
-                barrelRotateVerticallyBy += rotatationIncrementBy;
-            break;
-        case 's':
-            if (barrelRotateVerticallyBy > -gunRotationThreshold)
-                barrelRotateVerticallyBy -= rotatationIncrementBy;
             break;
         default:
             break;
@@ -580,62 +317,6 @@ void specialKeyListener(int key, int x, int y) {
     }
 }
 
-void mouseListener(int button, int state, int x, int y) {    //x, y is the x-y of the screen (2D)
-    switch (button) {
-        case GLUT_LEFT_BUTTON:
-            if (state == GLUT_DOWN)
-                drawBullet = true;
-            else if (state == GLUT_UP)
-                drawBullet = false;
-            break;
-
-        case GLUT_RIGHT_BUTTON:
-            if (state == GLUT_DOWN) {        // 2 times?? in ONE click? -- solution is checking DOWN or UP
-                drawaxes = 1 - drawaxes;
-            }
-            break;
-
-        case GLUT_MIDDLE_BUTTON:
-            //........
-            break;
-
-        default:
-            break;
-    }
-}
-
-double calculateDisplacement(double angle, double length) {
-    return tan((pi / 180) * angle) * length;
-}
-
-void calculateBulletCoordinates() {
-    //bulletX = tan((pi/180) * fullRotateBy )	* (bulletZ);
-    bulletX = calculateDisplacement(fullRotateBy, bulletZ);
-
-    // the main height
-    double h = calculateDisplacement(rotateBarrelWithSemiSphere, bulletZ);
-
-    //double p = tan((pi/180) * rotateBarrelWithSemiSphere ) * (bulletZ - centerSphereRadius);
-    double p = calculateDisplacement(rotateBarrelWithSemiSphere, bulletZ - centerSphereRadius);
-    //double q = tan((pi/180) *  (barrelRotateVerticallyBy + rotateBarrelWithSemiSphere)) * (bulletZ - centerSphereRadius);
-    double q = calculateDisplacement(barrelRotateVerticallyBy + rotateBarrelWithSemiSphere,
-                                     bulletZ - centerSphereRadius);
-
-    bulletY = h + (q - p);
-
-    if (drawBullet && bulletX <= planeSide && bulletX >= -planeSide && bulletY <= planeSide && bulletY >= -planeSide) {
-        bulletCoordinates.push_back({bulletX, bulletY, -bulletZ});
-    }
-}
-
-void drawBulletsOnPlane() {
-    glTranslatef(0, 0, 10);
-
-    for (int i = 0; i < bulletCoordinates.size(); i++) {
-        glColor3f(1, 0, 0);
-        drawSquareBullets(5, -bulletCoordinates[i].x, bulletCoordinates[i].y);
-    }
-}
 
 void loadData() {
     cout << "out" << endl;
@@ -851,39 +532,6 @@ void display() {
     //glRotatef(-90, 0, 1, 0);
 
     drawAxes();
-    //drawGrid();
-
-    /*glColor3f(1.0,0.0,0.0);
-    glBegin(GL_QUADS);
-    {
-        glVertex3f(10, 10, 0);
-        glVertex3f(10, -10, 0);
-        glVertex3f(-10, -10, 0);
-        glVertex3f(-10, 10, 0);
-    }
-    glEnd();
-
-
-    glColor3f(0.0,1.0,0.0);
-    glBegin(GL_QUADS);
-    {
-        glVertex3f(10, 0, 10);
-        glVertex3f(10, 0, -10);
-        glVertex3f(-10, 0, -10);
-        glVertex3f(-10, 0, 10);
-    }
-    glEnd();
-
-
-    glColor3f(0.0,0.0,1.0);
-    glBegin(GL_QUADS);
-    {
-        glVertex3f(0, 10, 10);
-        glVertex3f(0, 10, -10);
-        glVertex3f(0, -10, -10);
-        glVertex3f(0, -10, 10);
-    }
-    glEnd();*/
 
     for (int i = 0; i < objects.size(); i++) {
         objects[i]->draw();
@@ -893,48 +541,6 @@ void display() {
         lights[i].draw();
     }
 
-
-
-    /*glRotatef(90, 1, 0, 0);
-
-    // draw plane
-    glPushMatrix();
-    glTranslatef(0, 0, -planeZ);
-
-    glColor3f(0.7, 0.7, 0.7);
-    drawSquare(planeSide);
-    bulletZ = planeZ - 10;
-    calculateBulletCoordinates();
-    drawBulletsOnPlane();
-    glPopMatrix();
-
-
-    // Full Object Rotation
-    glRotatef(fullRotateBy, 0, 1, 0);
-
-    //lower half of center sphere
-    drawUpperSphere(centerSphereRadius, 50, 30, 0);
-
-    glRotatef(rotateBarrelWithSemiSphere, 1, 0, 0); // e-r operation
-
-    // Upper half drawn of center sphere
-    drawLowerSphere(centerSphereRadius, 50, 30, 0);
-
-    // shifting the axis by -30 along the z-axis
-    glTranslatef(0, 0, -centerSphereRadius); // 30
-
-    glRotatef(barrelRotatpos.x, pos.y, pos.z, pos.x + l.x, pos.y + l.y, pos.z + l.z, u.x, u.y, u.zeVerticallyBy, 1, 0, 0); //a-s rotation
-
-    glRotatef(barrelRotateAlongOwnAxisBy, 0, 0, 1); // d-f rotation
-
-    // draw the bottom part of the gun
-    drawUpperSphere(gunSphereRadius, 50, 30, -gunSphereRadius);
-
-    // cylinder and funnel functions
-    glTranslatef(0, 0, -(cylinderHeight + gunSphereRadius));*/
-
-
-    //ADD this line in the end --- if you use double buffer (i.e. GL_DOUBLE)
     glutSwapBuffers();
 }
 
@@ -946,7 +552,6 @@ void animate() {
 
 void init() {
     //codes for initialization
-    drawgrid = 0;
     drawaxes = 1;
     angle = 0;
 
@@ -977,7 +582,7 @@ int main(int argc, char **argv) {
     glutInitWindowPosition(0, 0);
     glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGB);    //Depth, Double buffer, RGB color
 
-    glutCreateWindow("My OpenGL Program");
+    glutCreateWindow("Ray Tracer");
 
     init();
 
@@ -988,7 +593,6 @@ int main(int argc, char **argv) {
 
     glutKeyboardFunc(keyboardListener);
     glutSpecialFunc(specialKeyListener);
-    glutMouseFunc(mouseListener);
 
     glutMainLoop();        //The main loop of OpenGL
 
