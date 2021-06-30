@@ -75,7 +75,7 @@ double get_phong_intensity(double Ip, double kd, double ks, double object_color_
                            int shine, Vector3D L, Vector3D N, Vector3D R, Vector3D V) {
 
     double diffused_comp = Ip * kd * object_color_comp * max(getDotProduct(L, N), 0.0);
-    double specular_comp = Ip * ks  * max(pow(getDotProduct(R, V), shine), 0.0);
+    double specular_comp = Ip * ks  * object_color_comp * max(pow(getDotProduct(R, V), shine), 0.0);
 
     //cout<<getDotProduct(L, N)<<" "<<getDotProduct(R, V);
     //cout<<specular_comp<<endl;
@@ -596,49 +596,49 @@ public:
             //controlling recursion upto a certain level
             if(level >= (int) recursion_level) return t;
 
-            if (level < (int) recursion_level){
 
-                Vector3D start = {poi.x + R.x * 1, poi.y + R.y * 1, poi.z + R.z * 1};
-                Ray reflected_ray = Ray(start, R);
+            double scaler = 2 * getDotProduct(r.dir, N);
+            Vector3D R_reflect = {r.dir.x -  scaler * N.x , r.dir.y -  scaler * N.y , r.dir.z -  scaler * N.z };
 
-                double t_min_reflection = 10000, t_reflection, nearest_reflection = -1;
+            Vector3D start = {poi.x + R_reflect.x * 1, poi.y + R_reflect.y * 1, poi.z + R_reflect.z * 1};
+            Ray reflected_ray = Ray(start, R_reflect);
 
-                // looping to find the nearest object for reflected ray
-                for(int obj_indx = 0; obj_indx < objects.size(); obj_indx++){
+            double t_min_reflection = 10000, t_reflection, nearest_reflection = -1;
 
-                    vector<double> dummy_color_reflection;
-                    dummy_color_reflection.push_back(0);
-                    dummy_color_reflection.push_back(0);
-                    dummy_color_reflection.push_back(0);
+            // looping to find the nearest object for reflected ray
+            for(int obj_indx = 0; obj_indx < objects.size(); obj_indx++){
 
-                    t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0, obj_indx);
+                vector<double> dummy_color_reflection;
+                dummy_color_reflection.push_back(0);
+                dummy_color_reflection.push_back(0);
+                dummy_color_reflection.push_back(0);
 
-                    if (t_reflection < t_min_reflection) {
-                        nearest_reflection = obj_indx; //storing the index of the nearest object
-                        t_min_reflection = t_reflection;
-                    }
+                t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0, obj_indx);
 
+                if (t_reflection < t_min_reflection) {
+                    nearest_reflection = obj_indx; //storing the index of the nearest object
+                    t_min_reflection = t_reflection;
                 }
+            }
 
-                // then we do the reflection call
-                vector<double> reflected_color;
-                reflected_color.push_back(0);
-                reflected_color.push_back(0);
-                reflected_color.push_back(0);
+            // then we do the reflection call
+            vector<double> reflected_color;
+            reflected_color.push_back(0);
+            reflected_color.push_back(0);
+            reflected_color.push_back(0);
 
-                // if we find a nearest one
-                if(nearest_reflection != -1){
+            // if we find a nearest one
+            if(nearest_reflection != -1){
 
-                    double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1, nearest_reflection);
+                double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1, nearest_reflection);
 
-                    //cout<<reflected_color[0]<<" "<<reflected_color[1]<<" "<<reflected_color[2]<<endl;
-                    Ir += reflected_color[0] * coefficients[3];
-                    Ig += reflected_color[1] * coefficients[3];
-                    Ib += reflected_color[2] * coefficients[3];
-
-                }
+                //cout<<reflected_color[0]<<" "<<reflected_color[1]<<" "<<reflected_color[2]<<endl;
+                Ir += reflected_color[0] * coefficients[3];
+                Ig += reflected_color[1] * coefficients[3];
+                Ib += reflected_color[2] * coefficients[3];
 
             }
+
 
 
             final_color[0] = Ir;
@@ -813,8 +813,11 @@ public:
 
             if (level < (int) recursion_level){
 
-                Vector3D start = {poi.x + R.x * 1, poi.y + R.y * 1, poi.z + R.z * 1};
-                Ray reflected_ray = Ray(start, R);
+                double scaler = 2 * getDotProduct(r.dir, N);
+                Vector3D R_reflect = {r.dir.x -  scaler * N.x , r.dir.y -  scaler * N.y , r.dir.z -  scaler * N.z };
+
+                Vector3D start = {poi.x + R_reflect.x * 1, poi.y + R_reflect.y * 1, poi.z + R_reflect.z * 1};
+                Ray reflected_ray = Ray(start, R_reflect);
 
                 double t_min_reflection = 10000, t_reflection, nearest_reflection = -1;
 
@@ -894,11 +897,11 @@ public:
             //controlling recursion upto a certain level
             if(level >= (int) recursion_level) return t_neg;
 
-            if (level < (int) recursion_level){
+                double scaler = 2 * getDotProduct(r.dir, N);
+                Vector3D R_reflect = {r.dir.x -  scaler * N.x , r.dir.y -  scaler * N.y , r.dir.z -  scaler * N.z };
 
-                Vector3D start = {poi.x + R.x * 1, poi.y + R.y * 1, poi.z + R.z * 1};
-                Ray reflected_ray = Ray(start, R);
-
+                Vector3D start = {poi.x + R_reflect.x * 1, poi.y + R_reflect.y * 1, poi.z + R_reflect.z * 1};
+                Ray reflected_ray = Ray(start, R_reflect);
                 double t_min_reflection = 10000, t_reflection, nearest_reflection = -1;
 
                 // looping to find the nearest object for reflected ray
@@ -936,7 +939,7 @@ public:
 
                 }
 
-            }
+
 
             final_color[0] = Ir;
             final_color[1] = Ig;
@@ -1265,10 +1268,12 @@ public:
             //controlling recursion upto a certain level
             if(level >= (int) recursion_level) return t;
 
-            if (level < (int) recursion_level){
 
-                Vector3D start = {poi.x + R.x * 1, poi.y + R.y * 1, poi.z + R.z * 1};
-                Ray reflected_ray = Ray(start, R);
+                double scaler = 2 * getDotProduct(r.dir, N);
+                Vector3D R_reflect = {r.dir.x -  scaler * N.x , r.dir.y -  scaler * N.y , r.dir.z -  scaler * N.z };
+
+                Vector3D start = {poi.x + R_reflect.x * 1, poi.y + R_reflect.y * 1, poi.z + R_reflect.z * 1};
+                Ray reflected_ray = Ray(start, R_reflect);
 
                 double t_min_reflection = 10000, t_reflection, nearest_reflection = -1;
 
@@ -1307,7 +1312,7 @@ public:
 
                 }
 
-            }
+
 
 
             final_color[0] = Ir;
