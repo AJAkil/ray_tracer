@@ -180,22 +180,22 @@ public:
     virtual void draw() {}
 
     void setColor(double color_r, double color_g, double color_b) {
-        cout << "In set color" << endl;
-        cout << color_r << color_g << color_b << endl << "\n";
+        //cout << "In set color" << endl;
+        //cout << color_r << color_g << color_b << endl << "\n";
         color[0] = color_r;
         color[1] = color_g;
         color[2] = color_b;
     }
 
     void setShine(int shine_value) {
-        cout << "In shine value" << endl;
-        cout << shine_value << endl << "\n";
+        // cout << "In shine value" << endl;
+        // cout << shine_value << endl << "\n";
         shine = shine_value;
     }
 
     void setCoEfficients(double ambient, double diffuse, double specular, double recur_reflect) {
-        cout << "In set coeff" << endl;
-        cout << ambient << diffuse << specular << recur_reflect << endl << "\n";
+        // cout << "In set coeff" << endl;
+        // cout << ambient << diffuse << specular << recur_reflect << endl << "\n";
         coefficients[0] = ambient;
         coefficients[1] = diffuse;
         coefficients[2] = specular;
@@ -266,6 +266,7 @@ carrier calculate_color(double red, double green, double blue, Vector3D N, Vecto
 
             //cout<<" before intersect call inside"<<endl;
             double t_test = objects[j]->intersect(light_ray, dummy_color, 0, j);
+            dummy_color.clear();
             //cout<<" after intersect call inside"<<endl;
 
             // we check the condition here
@@ -338,8 +339,6 @@ public:
             }
         }
 
-        //glRotatef(90, 0, 1, 0);
-
         //glTranslatef(reference_point.x, reference_point.y, reference_point.z)
         //draw quads using generated points
         for (i = 0; i < stacks; i++) {
@@ -382,10 +381,6 @@ public:
         //printVector3D(r.dir);
         Vector3D R_start = {r.start.x - reference_point.x, r.start.y - reference_point.y,
                             r.start.z - reference_point.z};
-        //cout<<"R_START "<<endl;
-        //printVector3D(R_start);
-        //cout<<"R_DIR "<<endl;
-        //printVector3D(r.dir);
         double a = 1;
         double b = 2 * getDotProduct(r.dir, R_start);
         //cout<<"b "<<b<<endl;
@@ -461,6 +456,7 @@ public:
             dummy_color_reflection.push_back(0);
 
             t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0, obj_indx);
+            dummy_color_reflection.clear();
 
             if (t_reflection < t_min_reflection) {
                 nearest_reflection = obj_indx; //storing the index of the nearest object
@@ -485,6 +481,8 @@ public:
                     Ib += reflected_color[2] * coefficients[3];
 
                 }
+
+                reflected_color.clear();
 
 
 
@@ -591,8 +589,6 @@ public:
             Ig = coloring_info.Ig;
             Ib = coloring_info.Ib;
 
-            Vector3D R = coloring_info.R;
-
             //controlling recursion upto a certain level
             if(level >= (int) recursion_level) return t;
 
@@ -614,6 +610,7 @@ public:
                 dummy_color_reflection.push_back(0);
 
                 t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0, obj_indx);
+                dummy_color_reflection.clear();
 
                 if (t_reflection < t_min_reflection) {
                     nearest_reflection = obj_indx; //storing the index of the nearest object
@@ -638,6 +635,8 @@ public:
                 Ib += reflected_color[2] * coefficients[3];
 
             }
+
+            reflected_color.clear();
 
 
 
@@ -680,7 +679,7 @@ public:
         height = cube_h;
         printVector3D(reference_point);
 
-        cout << "coeff" << eqn_coefficients.size() << endl;
+        //cout << "coeff" << eqn_coefficients.size() << endl;
 
     }
 
@@ -805,13 +804,8 @@ public:
             Ig = coloring_info.Ig;
             Ib = coloring_info.Ib;
 
-
-            Vector3D R = coloring_info.R;
-
             //controlling recursion upto a certain level
             if(level >= (int) recursion_level) return t_neg;
-
-            if (level < (int) recursion_level){
 
                 double scaler = 2 * getDotProduct(r.dir, N);
                 Vector3D R_reflect = {r.dir.x -  scaler * N.x , r.dir.y -  scaler * N.y , r.dir.z -  scaler * N.z };
@@ -830,6 +824,7 @@ public:
                     dummy_color_reflection.push_back(0);
 
                     t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0, obj_indx);
+                    dummy_color_reflection.clear();
 
                     if (t_reflection < t_min_reflection) {
                         nearest_reflection = obj_indx; //storing the index of the nearest object
@@ -856,7 +851,7 @@ public:
 
                 }
 
-            }
+            reflected_color.clear();
 
             final_color[0] = Ir;
             final_color[1] = Ig;
@@ -891,9 +886,6 @@ public:
             Ig = coloring_info.Ig;
             Ib = coloring_info.Ib;
 
-
-            Vector3D R = coloring_info.R;
-
             //controlling recursion upto a certain level
             if(level >= (int) recursion_level) return t_neg;
 
@@ -913,6 +905,7 @@ public:
                     dummy_color_reflection.push_back(0);
 
                     t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0, obj_indx);
+                    dummy_color_reflection.clear();
 
                     if (t_reflection < t_min_reflection) {
                         nearest_reflection = obj_indx; //storing the index of the nearest object
@@ -939,7 +932,7 @@ public:
 
                 }
 
-
+            reflected_color.clear();
 
             final_color[0] = Ir;
             final_color[1] = Ig;
@@ -952,109 +945,6 @@ public:
         } else {
             return 10000000;
         }
-
-        // then we check if the poi2 and poi2 is within cube
-        /*if ((reference_point.x <= poi1.x && poi1.x <= reference_point.x + length) &&
-            (reference_point.y <= poi1.y && poi1.y <= reference_point.y + width) &&
-            (reference_point.z <= poi1.z && poi1.z <= reference_point.z + height)
-            && (reference_point.x <= poi2.x && poi2.x <= reference_point.x + length) &&
-            (reference_point.y <= poi2.y && poi2.y <= reference_point.y + width) &&
-            (reference_point.z <= poi2.z && poi2.z <= reference_point.z + height)) {
-
-            // we choose the appropriate t from here and then we set the color here
-            cout << "FIRST CASE" << endl;
-            double final_t;
-
-            if (t_pos > 0 && t_neg > 0) {
-
-                final_t = min(t_pos, t_neg);
-
-            } else if (t_pos > 0 && t_neg < 0) {
-
-                final_t = t_pos;
-
-            } else if (t_pos < 0 && t_neg > 0) {
-
-                final_t = t_neg;
-
-            } else {
-                cout << "No two point" << endl;
-                return 1000000;
-            }
-
-
-            // we set the color and then we return the final t
-
-            // setting the color of the pixel of intersection
-            final_color[0] = color[0] * 1 * coefficients[0];
-            final_color[1] = color[1] * 1 * coefficients[0];
-            final_color[2] = color[2] * 1 * coefficients[0];
-
-            //cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
-
-            // returning the final_t
-            cout << "In general " << final_t << endl;
-            return final_t;
-
-        } else if ((reference_point.x <= poi1.x && poi1.x <= reference_point.x + length) &&
-                   (reference_point.y <= poi1.y && poi1.y <= reference_point.y + width) &&
-                   (reference_point.z <= poi1.z && poi1.z <= reference_point.z + height)) {
-
-            // we check for the t_pos here
-            cout << "SECOND CASE" << endl;
-
-            if (t_pos > 0) {
-
-
-                // setting the color of the pixel of intersection
-                final_color[0] = color[0] * 1 * coefficients[0];
-                final_color[1] = color[1] * 1 * coefficients[0];
-                final_color[2] = color[2] * 1 * coefficients[0];
-
-                //cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
-
-                // returning the final_t
-                cout << "in general " << t_pos << endl;
-                return t_pos;
-
-            } else {
-
-                cout << "No t_pos" << endl;
-                return 1000000;
-
-            }
-
-        } else if ((reference_point.x <= poi2.x && poi2.x <= reference_point.x + length) &&
-                   (reference_point.y <= poi2.y && poi2.y <= reference_point.y + width) &&
-                   (reference_point.z <= poi2.z && poi2.z <= reference_point.z + height)) {
-
-            cout << "THIRD CASE" << endl;
-            if (t_neg > 0) {
-
-
-                // setting the color of the pixel of intersection
-                final_color[0] = color[0] * 1 * coefficients[0];
-                final_color[1] = color[1] * 1 * coefficients[0];
-                final_color[2] = color[2] * 1 * coefficients[0];
-
-                //cout<<final_color[0]<<final_color[1]<<final_color[2]<<endl;
-
-                // returning the final_t
-                cout << "in general " << t_neg;
-                return t_neg;
-
-            } else {
-
-                cout << "No t_neg" << endl;
-                return 1000000;
-
-            }
-
-        } else {
-            //cout<<"FOURTH CASE"<<endl;
-            //cout<<"No ultimate"<<endl;
-            return 1000000;
-        }*/
 
     }
 
@@ -1179,82 +1069,6 @@ public:
 
             }
 
-            // // by default we consider that the point is in shadows
-            // Ir = red * 1 * coefficients[0];
-            // Ig = green * 1 * coefficients[0];
-            // Ib = blue * 1 * coefficients[0];
-            // Vector3D R = {0.0, 0.0, 0.0};
-
-            // // We loop over the light object
-            // for (int i = 0; i < lights.size(); i++) {
-
-            //     Vector3D l_source = lights[i].light_pos;
-
-            //     // we form the light vector from light source to point of intersection and we get the length
-            //     Vector3D L = {l_source.x - poi.x, l_source.y - poi.y, l_source.z - poi.z};
-            //     double LR_length = getVectorMagnitude(L);
-
-            //     // we form the light ray
-            //     Ray light_ray = Ray(poi, L);
-
-            //     // we et a flag to check whether we have an object in between light ray and light source or not
-            //     bool is_obstructed = false;
-
-            //     /**
-            //      * We run a for loop to check for each of the objects whether there is another object infront of the object
-            //      * we are trying to set the color for. We recursively call the intersect function with level = 0. If
-            //      * we obtain a t < LR_length, then it means the main object we are trying to color is being obstructed
-            //      * by another object. Then we break the loop and set the is_obstructed flag to true
-            //      */
-            //     for (int j = 0; j < objects.size(); j++) {
-
-            //         vector<double> dummy_color;
-            //         dummy_color.push_back(0);
-            //         dummy_color.push_back(0);
-            //         dummy_color.push_back(0);
-
-            //         double t_test = objects[j]->intersect(light_ray, dummy_color, 0, j);
-
-            //         // we check the condition here
-            //         if (j != self_index) {
-            //             if (t_test < LR_length) {
-            //                 is_obstructed = true;
-            //                 break;
-            //             }
-            //         }
-            //     }
-
-            //     // outside for loop of objects we set the colors as needed here
-
-            //     if (!is_obstructed) {
-
-            //         // we first normalize L
-            //         L = getUnitVector(L);
-
-            //         // calculate R
-            //         double scaler = 2 * getDotProduct(L, N);
-            //         R = {N.x * scaler - L.x, N.y * scaler - L.y, N.z * scaler - L.z};
-            //         R = getUnitVector(R); // normalize R
-
-            //         //ambient, diffused, specular, recursive
-            //         Ir += get_phong_intensity(lights[i].color[0], coefficients[1], coefficients[2],
-            //                                   red, shine, L, N, R, r.dir * -1);
-
-            //         Ig += get_phong_intensity(lights[i].color[1], coefficients[1], coefficients[2],
-            //                                   green, shine, L, N, R, r.dir * -1);
-
-            //         Ib += get_phong_intensity(lights[i].color[2], coefficients[1], coefficients[2],
-            //                                   blue, shine, L, N, R, r.dir * -1);
-
-            //     }
-
-            // }
-
-
-            // final_color[0] = Ir;
-            // final_color[1] = Ig;
-            // final_color[2] = Ib;
-
             carrier coloring_info = calculate_color(red, green, blue, N, r.dir, poi, self_index, shine,
                                                         coefficients[0],
                                                         coefficients[1], coefficients[2]);
@@ -1262,8 +1076,6 @@ public:
             Ir = coloring_info.Ir;
             Ig = coloring_info.Ig;
             Ib = coloring_info.Ib;
-
-            Vector3D R = coloring_info.R;
 
             //controlling recursion upto a certain level
             if(level >= (int) recursion_level) return t;
@@ -1286,6 +1098,7 @@ public:
                     dummy_color_reflection.push_back(0);
 
                     t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0, obj_indx);
+                    dummy_color_reflection.clear();
 
                     if (t_reflection < t_min_reflection) {
                         nearest_reflection = obj_indx; //storing the index of the nearest object
@@ -1312,7 +1125,7 @@ public:
 
                 }
 
-
+            reflected_color.clear();
 
 
             final_color[0] = Ir;
