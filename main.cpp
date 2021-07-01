@@ -1,4 +1,4 @@
-#include "1605079_HEADER.h"
+#include "1605079_Header.h"
 #include "bitmap_image.hpp"
 
 
@@ -21,31 +21,30 @@ double k = 2;
 vector<string> fileLines;
 vector<Object *> objects;
 vector<Light> lights;
-double recursion_level, image_width, image_height;
+int recursion_level, image_width, image_height;
 double windowHeight = 500, windowWidth = 500;
 int num_objects, num_light_sources;
 double view_angle = 80;
 
 vector<string> tokenizeString(string s) {
     vector<string> tokens;
-    cout<<s<<endl;
+    //cout << s << endl;
 
     // create the stream
     stringstream tokenizer(s);
-
     string token;
 
     while (getline(tokenizer, token, ' ')) {
         tokens.push_back(token);
     }
 
-    cout<<tokens[0]<<endl;
+    //cout << tokens[0] << endl;
 
     return tokens;
 }
 
 Vector3D parseLine(string line) {
-    cout << "In here" << endl;
+    //cout << "In here" << endl;
     vector<string> lines;
     Vector3D a = {0, 0, 0};
 
@@ -72,9 +71,9 @@ void readFile(const char *fileName) {
         newfile.close(); //close the file object.
     }
 
-    for (int i = 0; i < fileLines.size(); i++) {
-        cout << fileLines[i] << endl;
-     }
+//    for (int i = 0; i < fileLines.size(); i++) {
+//        cout << fileLines[i] << endl;
+//    }
 
 
 }
@@ -135,12 +134,12 @@ void drawAxes() {
 
 void capture() {
 
-    cout << "number of objects: " << objects.size() << endl;
+    //cout << "number of objects: " << objects.size() << endl;
 
     bitmap_image image((int) image_width, (int) image_height);
 
     // setting up the image
-    cout << "calling capture" << endl;
+    //cout << "calling capture" << endl;
     for (int i = 0; i < image_width; i++) {
         for (int j = 0; j < image_height; j++) {
             image.set_pixel(i, j, 0, 0, 0);
@@ -153,12 +152,12 @@ void capture() {
     double du = windowWidth / image_width;
     double dv = windowHeight / image_height;
 
-    cout << planeDistance << " " << du << " " << dv << endl;
-    printVector3D(topleft);
+    //cout << planeDistance << " " << du << " " << dv << endl;
+    //printVector3D(topleft);
 
     // Choose middle of the grid cell
     topleft = topleft + r * (0.5 * du) - u * (0.5 * dv);
-    printVector3D(topleft);
+    //printVector3D(topleft);
 
     // the index of the nearest object dummy_color
 
@@ -172,14 +171,9 @@ void capture() {
 
             // calculate current pixel vector/point
             Vector3D currentPixel = topleft + r * (i * du) - u * (j * dv);
-            //printVector3D(currentPixel);
             Vector3D R_d = {currentPixel.x - pos.x, currentPixel.y - pos.y, currentPixel.z - pos.z};
-            //printVector3D(R_d);
-            // create ray object
-            //Ray* r = new Ray(pos, R_d);
-            //double*  color = new double[3];
 
-            Ray r(pos, R_d);
+            Ray ray(pos, R_d);
             vector<double> dummy_color;
             dummy_color.push_back(0);
             dummy_color.push_back(0);
@@ -190,7 +184,7 @@ void capture() {
             for (int k = 0; k < objects.size(); k++) {
 
                 //cout<<"for pixel i and j" << i << " " << j<<endl;
-                t = objects[k]->intersect(r, dummy_color, 0, k);
+                t = objects[k]->intersect(ray, dummy_color, 0, k);
                 if (t < t_min) {
                     nearest = k; //storing the index of the nearest object
                     t_min = t;
@@ -199,39 +193,33 @@ void capture() {
             }
 
             // we again call intersect to set the color
-            //if(nearest == 1) cout<<"yes"<<endl;
             vector<double> color;
             color.push_back(0);
             color.push_back(0);
             color.push_back(0);
 
             if (nearest != -1) {
-                double temp = objects[nearest]->intersect(r, color, 1, nearest);
+                double temp = objects[nearest]->intersect(ray, color, 1, nearest);
 
                 // we set image pixel here
-                //if(color[2] !=0) cout<<"here the color is : "<<color[1]<<endl;
-                //cout<<color[0]<<color[1]<<color[2]<<endl;
-
                 // we clip colors here before we set the pixels here
-                if(color[0] > 1){
+                if (color[0] > 1) {
                     color[0] = 1;
-                }else if(color[0] < 0){
+                } else if (color[0] < 0) {
                     color[0] = 0;
                 }
 
-                if(color[1] > 1){
+                if (color[1] > 1) {
                     color[1] = 1;
-                }else if(color[1] < 0){
+                } else if (color[1] < 0) {
                     color[1] = 0;
                 }
 
-                if(color[2] > 1){
+                if (color[2] > 1) {
                     color[2] = 1;
-                }else if(color[2] < 0){
+                } else if (color[2] < 0) {
                     color[2] = 0;
                 }
-
-
 
 
                 image.set_pixel(i, j, color[0] * 255, color[1] * 255, color[2] * 255);
@@ -243,7 +231,8 @@ void capture() {
         }
     }
 
-    image.save_image("C:\\Users\\ragnarok_79\\Documents\\Important Docs\\Academics\\4_1\\Lab\\Graphics\\Ray-Tracer\\ray_tracer\\test_akil.bmp");
+    image.save_image(
+            "C:\\Users\\ragnarok_79\\Documents\\Important Docs\\Academics\\4_1\\Lab\\Graphics\\Ray-Tracer\\ray_tracer\\1605079_out.bmp");
 }
 
 void keyboardListener(unsigned char key, int x, int y) {
@@ -319,26 +308,28 @@ void specialKeyListener(int key, int x, int y) {
 
 
 void loadData() {
-    cout << "out" << endl;
-    readFile("C:\\Users\\ragnarok_79\\Documents\\Important Docs\\Academics\\4_1\\Lab\\Graphics\\Ray-Tracer\\ray_tracer\\scene_test.txt");
+    //cout << "out" << endl;
+    readFile(
+            "C:\\Users\\ragnarok_79\\Documents\\Important Docs\\Academics\\4_1\\Lab\\Graphics\\Ray-Tracer\\ray_tracer\\scene.txt");
 
     // Reading in the data
     vector<string> lines;
     lines = tokenizeString(fileLines[0]);
     istringstream(lines[0]) >> recursion_level;
 
-    cout<<recursion_level<<endl;
+    //cout << recursion_level << endl;
 
     lines = tokenizeString(fileLines[1]);
     istringstream(lines[0]) >> image_width;
     istringstream(lines[0]) >> image_height;
 
-    cout << "EKHNE" << recursion_level << " " << image_width << " " << image_height << endl;
+    //cout << "EKHNE" << recursion_level << " " << image_width << " " << image_height << endl;
 
     for (int i = 4; i < fileLines.size(); i++) {
         Object *temp;
         if (fileLines[i] == "sphere") {
-            cout << fileLines[i] << i << endl;
+            //cout<<"In sphere"<<endl;
+            //cout << fileLines[i] << i << endl;
 
             Vector3D center = parseLine(fileLines[i + 1]);
             double radius;
@@ -395,7 +386,7 @@ void loadData() {
 
         } else if (fileLines[i] == "general") {
 
-            cout << "y" << endl;
+            //cout << "In General" << endl;
             vector<string> lines;
             vector<double> coeffs;
 
@@ -409,11 +400,10 @@ void loadData() {
                 //cout<<i<<" ";
             }
 
-            for (int i = 0; i < coeffs.size(); i++) {
-
-                cout << coeffs[i] << endl;
-            }
-
+//            for (int i = 0; i < coeffs.size(); i++) {
+//
+//                cout << coeffs[i] << endl;
+//            }
 
             // we read in the cube data
             lines = tokenizeString(fileLines[i + 2]);
@@ -445,26 +435,29 @@ void loadData() {
             objects.push_back(temp);
 
             i += 5;
+        } else if (fileLines[i].empty()) {
+            //cout<<"here?"<<endl;
+            continue;
         } else {
-            if (fileLines[i] != "") {
+            //cout<<"In light section"<<endl;
 
-                double num_lights;
-                istringstream(fileLines[i]) >> num_lights;
-                //cout<<i+1+(int)num_lights*2<<endl;
+            double num_lights;
+            istringstream(fileLines[i]) >> num_lights;
+            //cout<<i+1+(int)num_lights*2<<endl;
 
-                for (int j = i + 1; j < i + 1 + (int) num_lights * 2; j += 2) {
-                    cout << fileLines[j] << endl;
-                    cout << fileLines[j + 1] << endl;
+            for (int j = i + 1; j < i + 1 + (int) num_lights * 2; j += 2) {
+                //cout << fileLines[j] << endl;
+                //cout << fileLines[j + 1] << endl;
 
-                    Vector3D light_pos = parseLine(fileLines[j]);
-                    printVector3D(light_pos);
-                    Vector3D color = parseLine(fileLines[j + 1]);
-                    Light light_source(light_pos, color.x, color.y, color.z);
-                    lights.push_back(light_source);
-                }
-
-                i += 1 + (int) num_lights * 2;
+                Vector3D light_pos = parseLine(fileLines[j]);
+                //printVector3D(light_pos);
+                Vector3D color = parseLine(fileLines[j + 1]);
+                Light light_source(light_pos, color.x, color.y, color.z);
+                lights.push_back(light_source);
             }
+
+            i += 1 + (int) num_lights * 2;
+
         }
         //cout<<fileLines[i]<<endl;
     }
@@ -480,7 +473,7 @@ void loadData() {
 
     objects.push_back(temp);
 
-    cout << objects.size() << endl;
+    //cout << objects.size() << endl;
 
 
     /*for (int i = 0; i < objects.size(); i++) {
@@ -595,6 +588,5 @@ int main(int argc, char **argv) {
     glutSpecialFunc(specialKeyListener);
 
     glutMainLoop();        //The main loop of OpenGL
-
     return 0;
 }
