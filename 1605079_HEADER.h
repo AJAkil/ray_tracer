@@ -203,6 +203,7 @@ public:
 extern vector<Object *> objects;
 extern vector<Light> lights;
 extern int recursion_level;
+double offset = 0.00001;
 
 struct carrier {
     double Ir, Ig, Ib;
@@ -211,7 +212,7 @@ struct carrier {
 
 typedef carrier carrier;
 
-carrier calculate_color(double red, double green, double blue, Vector3D N, Vector3D V, Vector3D poi, int self_index,
+carrier calculate_color(double red, double green, double blue, Vector3D N, Vector3D V, Vector3D poi,
                         int shine, double ka, double kd, double ks) {
 
     // by default we consider that the point is in shadows
@@ -230,7 +231,12 @@ carrier calculate_color(double red, double green, double blue, Vector3D N, Vecto
         double LR_length = getVectorMagnitude(L);
 
         // we form the light ray
-        Ray light_ray = Ray(poi, L);
+        // we first normalize L
+        L = getUnitVector(L);
+
+        Vector3D start = {poi.x + L.x * offset, poi.y + L.y * offset, poi.z + L.z * offset};
+
+        Ray light_ray = Ray(start, L);
 
         // we et a flag to check whether we have an object in between light ray and light source or not
         bool is_obstructed = false;
@@ -251,20 +257,15 @@ carrier calculate_color(double red, double green, double blue, Vector3D N, Vecto
             double t_test = objects[j]->intersect(light_ray, dummy_color, 0, j);
             dummy_color.clear();
 
-            if (j != self_index) {
-                if (t_test < LR_length) {
-                    is_obstructed = true;
-                    break;
-                }
+            if (t_test < LR_length) {
+                is_obstructed = true;
+                break;
             }
         }
 
         // outside for loop of objects we set the colors as needed here
 
         if (!is_obstructed) {
-
-            // we first normalize L
-            L = getUnitVector(L);
 
             // calculate R
             double scaler = 2 * getDotProduct(L, N);
@@ -288,6 +289,17 @@ carrier calculate_color(double red, double green, double blue, Vector3D N, Vecto
     carrier info = {Ir, Ig, Ib, R};
 
     return info;
+}
+
+Ray get_reflected_vector(Vector3D ray_dir, Vector3D N, Vector3D poi) {
+
+    double scaler = 2 * getDotProduct(ray_dir, N);
+    Vector3D R_reflect = {ray_dir.x - scaler * N.x, ray_dir.y - scaler * N.y, ray_dir.z - scaler * N.z};
+    R_reflect = getUnitVector(R_reflect);
+    Vector3D start = {poi.x + R_reflect.x * offset, poi.y + R_reflect.y * offset, poi.z + R_reflect.z * offset};
+    Ray reflected_ray = Ray(start, R_reflect);
+
+    return reflected_ray;
 }
 
 
@@ -399,23 +411,19 @@ public:
         Vector3D N = get_normal_vector(poi);
         N = getUnitVector(N);
 //
-        carrier coloring_info = calculate_color(color[0], color[1], color[2], N, r.dir, poi, self_index, shine,
+        carrier coloring_info = calculate_color(color[0], color[1], color[2], N, r.dir, poi, shine,
                                                 coefficients[0],
                                                 coefficients[1], coefficients[2]);
 
 //
-        Ir = coloring_info.Ir;
-        Ig = coloring_info.Ig;
-        Ib = coloring_info.Ib;
+        final_color[0] = coloring_info.Ir;
+        final_color[1] = coloring_info.Ig;
+        final_color[2] = coloring_info.Ib;
 
         //controlling recursion upto a certain level
-        if (level >  recursion_level) return final_t;
+        if (level >= recursion_level) return final_t;
 
-        double scaler = 2 * getDotProduct(r.dir, N);
-        Vector3D R_reflect = {r.dir.x - scaler * N.x, r.dir.y - scaler * N.y, r.dir.z - scaler * N.z};
-
-        Vector3D start = {poi.x + R_reflect.x * 1, poi.y + R_reflect.y * 1, poi.z + R_reflect.z * 1};
-        Ray reflected_ray = Ray(start, R_reflect);
+        Ray reflected_ray = get_reflected_vector(r.dir, N, poi);
 
         double t_min_reflection = 10000, t_reflection, nearest_reflection = -1;
 
@@ -448,18 +456,18 @@ public:
             double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1,
                                                                  nearest_reflection);
 
-            Ir += reflected_color[0] * coefficients[3];
-            Ig += reflected_color[1] * coefficients[3];
-            Ib += reflected_color[2] * coefficients[3];
+            final_color[0] += reflected_color[0] * coefficients[3];
+            final_color[1] += reflected_color[1] * coefficients[3];
+            final_color[2] += reflected_color[2] * coefficients[3];
 
         }
 
         reflected_color.clear();
 
 
-        final_color[0] = Ir;
-        final_color[1] = Ig;
-        final_color[2] = Ib;
+//        final_color[0] = Ir;
+//        final_color[1] = Ig;
+//        final_color[2] = Ib;
 
         return final_t;
     }
@@ -548,23 +556,18 @@ public:
             Vector3D N = get_normal_vector(poi);
             N = getUnitVector(N);
 
-            carrier coloring_info = calculate_color(color[0], color[1], color[2], N, r.dir, poi, self_index, shine,
+            carrier coloring_info = calculate_color(color[0], color[1], color[2], N, r.dir, poi, shine,
                                                     coefficients[0],
                                                     coefficients[1], coefficients[2]);
 
-            Ir = coloring_info.Ir;
-            Ig = coloring_info.Ig;
-            Ib = coloring_info.Ib;
+            final_color[0] = coloring_info.Ir;
+            final_color[1] = coloring_info.Ig;
+            final_color[2] = coloring_info.Ib;
 
             //controlling recursion upto a certain level
-            if (level >  recursion_level) return t;
+            if (level >= recursion_level) return t;
 
-
-            double scaler = 2 * getDotProduct(r.dir, N);
-            Vector3D R_reflect = {r.dir.x - scaler * N.x, r.dir.y - scaler * N.y, r.dir.z - scaler * N.z};
-
-            Vector3D start = {poi.x + R_reflect.x * 1, poi.y + R_reflect.y * 1, poi.z + R_reflect.z * 1};
-            Ray reflected_ray = Ray(start, R_reflect);
+            Ray reflected_ray = get_reflected_vector(r.dir, N, poi);
 
             double t_min_reflection = 10000, t_reflection, nearest_reflection = -1;
 
@@ -597,18 +600,13 @@ public:
                 double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1,
                                                                      nearest_reflection);
 
-                Ir += reflected_color[0] * coefficients[3];
-                Ig += reflected_color[1] * coefficients[3];
-                Ib += reflected_color[2] * coefficients[3];
+                final_color[0] += reflected_color[0] * coefficients[3];
+                final_color[1] += reflected_color[1] * coefficients[3];
+                final_color[2] += reflected_color[2] * coefficients[3];
 
             }
 
             reflected_color.clear();
-
-
-            final_color[0] = Ir;
-            final_color[1] = Ig;
-            final_color[2] = Ib;
 
             // returning the final_t
             return t;
@@ -749,22 +747,18 @@ public:
             Vector3D N = get_normal_vector(poi);
             N = getUnitVector(N);
 
-            carrier coloring_info = calculate_color(color[0], color[1], color[2], N, r.dir, poi, self_index, shine,
+            carrier coloring_info = calculate_color(color[0], color[1], color[2], N, r.dir, poi, shine,
                                                     coefficients[0],
                                                     coefficients[1], coefficients[2]);
 
-            Ir = coloring_info.Ir;
-            Ig = coloring_info.Ig;
-            Ib = coloring_info.Ib;
+            final_color[0] = coloring_info.Ir;
+            final_color[1] = coloring_info.Ig;
+            final_color[2] = coloring_info.Ib;
 
             //controlling recursion upto a certain level
             if (level >= recursion_level) return t_neg;
 
-            double scaler = 2 * getDotProduct(r.dir, N);
-            Vector3D R_reflect = {r.dir.x - scaler * N.x, r.dir.y - scaler * N.y, r.dir.z - scaler * N.z};
-
-            Vector3D start = {poi.x + R_reflect.x * 1, poi.y + R_reflect.y * 1, poi.z + R_reflect.z * 1};
-            Ray reflected_ray = Ray(start, R_reflect);
+            Ray reflected_ray = get_reflected_vector(r.dir, N, poi);
 
             double t_min_reflection = 10000, t_reflection, nearest_reflection = -1;
 
@@ -798,17 +792,13 @@ public:
                 double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1,
                                                                      nearest_reflection);
 
-                Ir += reflected_color[0] * coefficients[3];
-                Ig += reflected_color[1] * coefficients[3];
-                Ib += reflected_color[2] * coefficients[3];
+                final_color[0] += reflected_color[0] * coefficients[3];
+                final_color[1] += reflected_color[1] * coefficients[3];
+                final_color[2] += reflected_color[2] * coefficients[3];
 
             }
 
             reflected_color.clear();
-
-            final_color[0] = Ir;
-            final_color[1] = Ig;
-            final_color[2] = Ib;
 
             return t_neg;
 
@@ -825,22 +815,19 @@ public:
             N = getUnitVector(N);
 
 
-            carrier coloring_info = calculate_color(color[0], color[1], color[2], N, r.dir, poi, self_index, shine,
+            carrier coloring_info = calculate_color(color[0], color[1], color[2], N, r.dir, poi, shine,
                                                     coefficients[0],
                                                     coefficients[1], coefficients[2]);
 
-            Ir = coloring_info.Ir;
-            Ig = coloring_info.Ig;
-            Ib = coloring_info.Ib;
+            final_color[0] = coloring_info.Ir;
+            final_color[1] = coloring_info.Ig;
+            final_color[2] = coloring_info.Ib;
 
             //controlling recursion upto a certain level
-            if (level >  recursion_level) return t_neg;
+            if (level >= recursion_level) return t_neg;
 
-            double scaler = 2 * getDotProduct(r.dir, N);
-            Vector3D R_reflect = {r.dir.x - scaler * N.x, r.dir.y - scaler * N.y, r.dir.z - scaler * N.z};
+            Ray reflected_ray = get_reflected_vector(r.dir, N, poi);
 
-            Vector3D start = {poi.x + R_reflect.x * 1, poi.y + R_reflect.y * 1, poi.z + R_reflect.z * 1};
-            Ray reflected_ray = Ray(start, R_reflect);
             double t_min_reflection = 10000, t_reflection, nearest_reflection = -1;
 
             // looping to find the nearest object for reflected ray
@@ -873,18 +860,13 @@ public:
                 double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1,
                                                                      nearest_reflection);
 
-                Ir += reflected_color[0] * coefficients[3];
-                Ig += reflected_color[1] * coefficients[3];
-                Ib += reflected_color[2] * coefficients[3];
+                final_color[0] += reflected_color[0] * coefficients[3];
+                final_color[1] += reflected_color[1] * coefficients[3];
+                final_color[2] += reflected_color[2] * coefficients[3];
 
             }
 
             reflected_color.clear();
-
-            final_color[0] = Ir;
-            final_color[1] = Ig;
-            final_color[2] = Ib;
-
 
             return t_pos;
 
@@ -1010,23 +992,18 @@ public:
 
             }
 
-            carrier coloring_info = calculate_color(red, green, blue, N, r.dir, poi, self_index, shine,
+            carrier coloring_info = calculate_color(red, green, blue, N, r.dir, poi, shine,
                                                     coefficients[0],
                                                     coefficients[1], coefficients[2]);
 
-            Ir = coloring_info.Ir;
-            Ig = coloring_info.Ig;
-            Ib = coloring_info.Ib;
+            final_color[0] = coloring_info.Ir;
+            final_color[1] = coloring_info.Ig;
+            final_color[2] = coloring_info.Ib;
 
             //controlling recursion upto a certain level
-            if (level >  recursion_level) return t;
+            if (level >= recursion_level) return t;
 
-
-            double scaler = 2 * getDotProduct(r.dir, N);
-            Vector3D R_reflect = {r.dir.x - scaler * N.x, r.dir.y - scaler * N.y, r.dir.z - scaler * N.z};
-
-            Vector3D start = {poi.x + R_reflect.x * 1, poi.y + R_reflect.y * 1, poi.z + R_reflect.z * 1};
-            Ray reflected_ray = Ray(start, R_reflect);
+            Ray reflected_ray = get_reflected_vector(r.dir, N, poi);
 
             double t_min_reflection = 10000, t_reflection, nearest_reflection = -1;
 
@@ -1060,18 +1037,13 @@ public:
                 double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1,
                                                                      nearest_reflection);
 
-                Ir += reflected_color[0] * coefficients[3];
-                Ig += reflected_color[1] * coefficients[3];
-                Ib += reflected_color[2] * coefficients[3];
+                final_color[0] += reflected_color[0] * coefficients[3];
+                final_color[1] += reflected_color[1] * coefficients[3];
+                final_color[2] += reflected_color[2] * coefficients[3];
 
             }
 
             reflected_color.clear();
-
-
-            final_color[0] = Ir;
-            final_color[1] = Ig;
-            final_color[2] = Ib;
 
             return t;
 
