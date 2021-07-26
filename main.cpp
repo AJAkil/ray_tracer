@@ -1,17 +1,15 @@
-#include "1605079_Header.h"
+#include "header.h"
 #include "bitmap_image.hpp"
-
 
 using namespace std;
 
-#define pi (2*acos(0.0))
+#define pi (2 * acos(0.0))
 
 double cameraHeight;
 double cameraAngle;
 int drawaxes;
 double angle;
 double camTheta = 0.75;
-
 
 Vector3D pos = {100, 100, 0};
 Vector3D u = {0, 0, 1};
@@ -26,7 +24,8 @@ double windowHeight = 500, windowWidth = 500;
 int num_objects, num_light_sources;
 double view_angle = 80;
 
-vector<string> tokenizeString(string s) {
+vector<string> tokenizeString(string s)
+{
     vector<string> tokens;
     //cout << s << endl;
 
@@ -34,7 +33,8 @@ vector<string> tokenizeString(string s) {
     stringstream tokenizer(s);
     string token;
 
-    while (getline(tokenizer, token, ' ')) {
+    while (getline(tokenizer, token, ' '))
+    {
         tokens.push_back(token);
     }
 
@@ -43,7 +43,8 @@ vector<string> tokenizeString(string s) {
     return tokens;
 }
 
-Vector3D parseLine(string line) {
+Vector3D parseLine(string line)
+{
     //cout << "In here" << endl;
     vector<string> lines;
     Vector3D a = {0, 0, 0};
@@ -57,32 +58,35 @@ Vector3D parseLine(string line) {
     return a;
 }
 
-void readFile(const char *fileName) {
+void readFile(const char *fileName)
+{
 
     fileLines.clear();
     fstream newfile;
 
     newfile.open(fileName, ios::in);
-    if (newfile.is_open()) {
+    if (newfile.is_open())
+    {
         string line;
-        while (getline(newfile, line)) { //read data from file object and put it into string.
+        while (getline(newfile, line))
+        { //read data from file object and put it into string.
             fileLines.push_back(line);
         }
         newfile.close(); //close the file object.
     }
 
-//    for (int i = 0; i < fileLines.size(); i++) {
-//        cout << fileLines[i] << endl;
-//    }
-
-
+    //    for (int i = 0; i < fileLines.size(); i++) {
+    //        cout << fileLines[i] << endl;
+    //    }
 }
 
-double convertDegreeToRadian(int modifier) {
+double convertDegreeToRadian(int modifier)
+{
     return modifier * camTheta * pi / 180;
 }
 
-void camLookLr(int modifier) {
+void camLookLr(int modifier)
+{
     Vector3D temp_vec;
 
     temp_vec = r;
@@ -91,7 +95,8 @@ void camLookLr(int modifier) {
     l = l * cos(theta) + (temp_vec * -1) * sin(theta);
 }
 
-void camLookUpDown(int modifier) {
+void camLookUpDown(int modifier)
+{
     Vector3D temp_vec;
 
     temp_vec = l;
@@ -100,7 +105,8 @@ void camLookUpDown(int modifier) {
     u = u * cos(theta) + (temp_vec * -1) * sin(theta);
 }
 
-void camTilt(int modifier) {
+void camTilt(int modifier)
+{
     Vector3D temp_vec;
 
     temp_vec = r;
@@ -109,9 +115,10 @@ void camTilt(int modifier) {
     u = u * cos(theta) + (temp_vec * -1) * sin(theta);
 }
 
-
-void drawAxes() {
-    if (drawaxes == 1) {
+void drawAxes()
+{
+    if (drawaxes == 1)
+    {
         glColor3f(1.0, 1.0, 1.0);
         glBegin(GL_LINES);
         {
@@ -131,21 +138,22 @@ void drawAxes() {
     }
 }
 
-
-void capture() {
+void capture()
+{
 
     //cout << "number of objects: " << objects.size() << endl;
 
-    bitmap_image image((int) image_width, (int) image_height);
+    bitmap_image image((int)image_width, (int)image_height);
 
     // setting up the image
     //cout << "calling capture" << endl;
-    for (int i = 0; i < image_width; i++) {
-        for (int j = 0; j < image_height; j++) {
+    for (int i = 0; i < image_width; i++)
+    {
+        for (int j = 0; j < image_height; j++)
+        {
             image.set_pixel(i, j, 0, 0, 0);
         }
     }
-
 
     double planeDistance = (windowHeight / 2.0) / tan(convertDegreeToRadian(view_angle) / 2.0);
     Vector3D topleft = pos + l * planeDistance - r * (windowWidth / 2) + u * (windowHeight / 2);
@@ -161,10 +169,10 @@ void capture() {
 
     // the index of the nearest object dummy_color
 
-
-    for (int i = 0; i < image_width; i++) {
-        for (int j = 0; j < image_height; j++) {
-
+    for (int i = 0; i < image_width; i++)
+    {
+        for (int j = 0; j < image_height; j++)
+        {
 
             int nearest = -1;
             double t_min = 10000, t;
@@ -181,11 +189,13 @@ void capture() {
             //cout<<getVectorMagnitude(r.dir);
 
             // iterating over the objects
-            for (int k = 0; k < objects.size(); k++) {
+            for (int k = 0; k < objects.size(); k++)
+            {
 
                 //cout<<"for pixel i and j" << i << " " << j<<endl;
-                t = objects[k]->intersect(ray, dummy_color, 0, k);
-                if (t < t_min) {
+                t = objects[k]->intersect(ray, dummy_color, 0);
+                if (t < t_min)
+                {
                     nearest = k; //storing the index of the nearest object
                     t_min = t;
                     //cout<<"storing "<<k<<endl;
@@ -198,119 +208,131 @@ void capture() {
             color.push_back(0);
             color.push_back(0);
 
-            if (nearest != -1) {
-                double temp = objects[nearest]->intersect(ray, color, 1, nearest);
+            if (nearest != -1)
+            {
+                double temp = objects[nearest]->intersect(ray, color, 1);
 
                 // we set image pixel here
                 // we clip colors here before we set the pixels here
-                if (color[0] > 1) {
+                if (color[0] > 1)
+                {
                     color[0] = 1;
-                } else if (color[0] < 0) {
+                }
+                else if (color[0] < 0)
+                {
                     color[0] = 0;
                 }
 
-                if (color[1] > 1) {
+                if (color[1] > 1)
+                {
                     color[1] = 1;
-                } else if (color[1] < 0) {
+                }
+                else if (color[1] < 0)
+                {
                     color[1] = 0;
                 }
 
-                if (color[2] > 1) {
+                if (color[2] > 1)
+                {
                     color[2] = 1;
-                } else if (color[2] < 0) {
+                }
+                else if (color[2] < 0)
+                {
                     color[2] = 0;
                 }
-
 
                 image.set_pixel(i, j, color[0] * 255, color[1] * 255, color[2] * 255);
             }
 
             color.clear();
             dummy_color.clear();
-
         }
     }
 
     image.save_image(
-            "C:\\Users\\ragnarok_79\\Documents\\Important Docs\\Academics\\4_1\\Lab\\Graphics\\Ray-Tracer\\ray_tracer\\1605079_out.bmp");
+        "C:\\Users\\ragnarok_79\\Documents\\Important Docs\\Academics\\4_1\\Lab\\Graphics\\Ray-Tracer\\ray_tracer\\out.bmp");
 }
 
-void keyboardListener(unsigned char key, int x, int y) {
+void keyboardListener(unsigned char key, int x, int y)
+{
 
-    switch (key) {
+    switch (key)
+    {
 
-        case '0':
-            capture();
-            break;
-        case '1':
-            camLookLr(1);
-            break;
-        case '2':
-            camLookLr(-1);
-            break;
-        case '3':
-            camLookUpDown(1);
-            break;
-        case '4':
-            camLookUpDown(-1);
-            break;
-        case '5':
-            camTilt(1);
-            break;
-        case '6':
-            camTilt(-1);
-            break;
-        default:
-            break;
+    case '0':
+        capture();
+        break;
+    case '1':
+        camLookLr(1);
+        break;
+    case '2':
+        camLookLr(-1);
+        break;
+    case '3':
+        camLookUpDown(1);
+        break;
+    case '4':
+        camLookUpDown(-1);
+        break;
+    case '5':
+        camTilt(1);
+        break;
+    case '6':
+        camTilt(-1);
+        break;
+    default:
+        break;
     }
 }
 
-void specialKeyListener(int key, int x, int y) {
-    switch (key) {
-        case GLUT_KEY_DOWN:
-            //down arrow key
-            pos.x -= k * l.x;
-            pos.y -= k * l.y;
-            pos.z -= k * l.z;
-            break;
-        case GLUT_KEY_UP:        // up arrow key
-            //cameraHeight += 3.0;
-            pos.x += k * l.x;
-            pos.y += k * l.y;
-            pos.z += k * l.z;
-            break;
+void specialKeyListener(int key, int x, int y)
+{
+    switch (key)
+    {
+    case GLUT_KEY_DOWN:
+        //down arrow key
+        pos.x -= k * l.x;
+        pos.y -= k * l.y;
+        pos.z -= k * l.z;
+        break;
+    case GLUT_KEY_UP: // up arrow key
+        //cameraHeight += 3.0;
+        pos.x += k * l.x;
+        pos.y += k * l.y;
+        pos.z += k * l.z;
+        break;
 
-        case GLUT_KEY_RIGHT:
-            pos.x += k * r.x;
-            pos.y += k * r.y;
-            pos.z += k * r.z;
-            break;
-        case GLUT_KEY_LEFT:
-            pos.x -= k * r.x;
-            pos.y -= k * r.y;
-            pos.z -= k * r.z;
-            break;
+    case GLUT_KEY_RIGHT:
+        pos.x += k * r.x;
+        pos.y += k * r.y;
+        pos.z += k * r.z;
+        break;
+    case GLUT_KEY_LEFT:
+        pos.x -= k * r.x;
+        pos.y -= k * r.y;
+        pos.z -= k * r.z;
+        break;
 
-        case GLUT_KEY_PAGE_UP:
-            pos.x += k * u.x;
-            pos.y += k * u.y;
-            pos.z += k * u.z;
-            break;
-        case GLUT_KEY_PAGE_DOWN:
-            pos.x -= k * u.x;
-            pos.y -= k * u.y;
-            pos.z -= k * u.z;
+    case GLUT_KEY_PAGE_UP:
+        pos.x += k * u.x;
+        pos.y += k * u.y;
+        pos.z += k * u.z;
+        break;
+    case GLUT_KEY_PAGE_DOWN:
+        pos.x -= k * u.x;
+        pos.y -= k * u.y;
+        pos.z -= k * u.z;
 
-        default:
-            break;
+    default:
+        break;
     }
 }
 
-
-void loadData() {
+void loadData()
+{
     //cout << "out" << endl;
     readFile(
-            "C:\\Users\\ragnarok_79\\Documents\\Important Docs\\Academics\\4_1\\Lab\\Graphics\\Ray-Tracer\\ray_tracer\\scene.txt");
+        "C:\\Users\\ragnarok_79\\Documents\\Important Docs\\Academics\\4_1\\Lab\\Graphics\\Ray-Tracer\\ray_tracer\\scene.txt");
 
     // Reading in the data
     vector<string> lines;
@@ -325,9 +347,11 @@ void loadData() {
 
     //cout << "EKHNE" << recursion_level << " " << image_width << " " << image_height << endl;
 
-    for (int i = 4; i < fileLines.size(); i++) {
+    for (int i = 4; i < fileLines.size(); i++)
+    {
         Object *temp;
-        if (fileLines[i] == "sphere") {
+        if (fileLines[i] == "sphere")
+        {
             //cout<<"In sphere"<<endl;
             //cout << fileLines[i] << i << endl;
 
@@ -355,8 +379,9 @@ void loadData() {
 
             objects.push_back(temp);
             i += 5;
-
-        } else if (fileLines[i] == "triangle") {
+        }
+        else if (fileLines[i] == "triangle")
+        {
 
             Vector3D a = parseLine(fileLines[i + 1]);
             Vector3D b = parseLine(fileLines[i + 2]);
@@ -383,8 +408,9 @@ void loadData() {
             objects.push_back(temp);
 
             i += 6;
-
-        } else if (fileLines[i] == "general") {
+        }
+        else if (fileLines[i] == "general")
+        {
 
             //cout << "In General" << endl;
             vector<string> lines;
@@ -393,17 +419,18 @@ void loadData() {
             lines = tokenizeString(fileLines[i + 1]);
 
             // reading in the coefficients from the file
-            for (int i = 0; i < lines.size(); i++) {
+            for (int i = 0; i < lines.size(); i++)
+            {
                 double t;
                 istringstream(lines[i]) >> t;
                 coeffs.push_back(t);
                 //cout<<i<<" ";
             }
 
-//            for (int i = 0; i < coeffs.size(); i++) {
-//
-//                cout << coeffs[i] << endl;
-//            }
+            //            for (int i = 0; i < coeffs.size(); i++) {
+            //
+            //                cout << coeffs[i] << endl;
+            //            }
 
             // we read in the cube data
             lines = tokenizeString(fileLines[i + 2]);
@@ -435,17 +462,22 @@ void loadData() {
             objects.push_back(temp);
 
             i += 5;
-        } else if (fileLines[i].empty()) {
+        }
+        else if (fileLines[i].empty())
+        {
             //cout<<"here?"<<endl;
             continue;
-        } else {
+        }
+        else
+        {
             //cout<<"In light section"<<endl;
 
             double num_lights;
             istringstream(fileLines[i]) >> num_lights;
             //cout<<i+1+(int)num_lights*2<<endl;
 
-            for (int j = i + 1; j < i + 1 + (int) num_lights * 2; j += 2) {
+            for (int j = i + 1; j < i + 1 + (int)num_lights * 2; j += 2)
+            {
                 //cout << fileLines[j] << endl;
                 //cout << fileLines[j + 1] << endl;
 
@@ -456,8 +488,7 @@ void loadData() {
                 lights.push_back(light_source);
             }
 
-            i += 1 + (int) num_lights * 2;
-
+            i += 1 + (int)num_lights * 2;
         }
         //cout<<fileLines[i]<<endl;
     }
@@ -473,8 +504,7 @@ void loadData() {
 
     objects.push_back(temp);
 
-    //cout << objects.size() << endl;
-
+    cout << objects.size() << endl;
 
     /*for (int i = 0; i < objects.size(); i++) {
        cout << objects[i]->length << endl;
@@ -483,15 +513,14 @@ void loadData() {
     /*for(auto & light : lights){
         cout<<light.light_pos.x<<endl;
     }*/
-
-
 }
 
-void display() {
+void display()
+{
 
     //clear the display
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(0, 0, 0, 0);    //color black
+    glClearColor(0, 0, 0, 0); //color black
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     /********************
@@ -512,10 +541,8 @@ void display() {
     //gluLookAt(200*cos(cameraAngle), 200*sin(cameraAngle), cameraHeight,		0,0,0,		0,0,1);
     gluLookAt(pos.x, pos.y, pos.z, pos.x + l.x, pos.y + l.y, pos.z + l.z, u.x, u.y, u.z);
 
-
     //again select MODEL-VIEW
     glMatrixMode(GL_MODELVIEW);
-
 
     /****************************
     / Add your objects from here
@@ -526,24 +553,27 @@ void display() {
 
     drawAxes();
 
-    for (int i = 0; i < objects.size(); i++) {
+    for (int i = 0; i < objects.size(); i++)
+    {
         objects[i]->draw();
     }
 
-    for (int i = 0; i < lights.size(); i++) {
+    for (int i = 0; i < lights.size(); i++)
+    {
         lights[i].draw();
     }
 
     glutSwapBuffers();
 }
 
-
-void animate() {
+void animate()
+{
     //codes for any changes in Models, Camera
     glutPostRedisplay();
 }
 
-void init() {
+void init()
+{
     //codes for initialization
     drawaxes = 1;
     angle = 0;
@@ -568,25 +598,26 @@ void init() {
     //far distance
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
     loadData();
     glutInit(&argc, argv);
     glutInitWindowSize(windowHeight, windowWidth);
     glutInitWindowPosition(0, 0);
-    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGB);    //Depth, Double buffer, RGB color
+    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGB); //Depth, Double buffer, RGB color
 
     glutCreateWindow("Ray Tracer");
 
     init();
 
-    glEnable(GL_DEPTH_TEST);    //enable Depth Testing
+    glEnable(GL_DEPTH_TEST); //enable Depth Testing
 
-    glutDisplayFunc(display);    //display callback function
-    glutIdleFunc(animate);        //what you want to do in the idle time (when no drawing is occuring)
+    glutDisplayFunc(display); //display callback function
+    glutIdleFunc(animate);    //what you want to do in the idle time (when no drawing is occuring)
 
     glutKeyboardFunc(keyboardListener);
     glutSpecialFunc(specialKeyListener);
 
-    glutMainLoop();        //The main loop of OpenGL
+    glutMainLoop(); //The main loop of OpenGL
     return 0;
 }

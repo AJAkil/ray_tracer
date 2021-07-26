@@ -191,7 +191,7 @@ public:
         coefficients[3] = recur_reflect;
     }
 
-    virtual double intersect(Ray &r, vector<double> &final_color, int level, int self_index) {
+    virtual double intersect(Ray &r, vector<double> &final_color, int level) {
         return -1.0;
     }
 
@@ -254,7 +254,7 @@ carrier calculate_color(double red, double green, double blue, Vector3D N, Vecto
             dummy_color.push_back(0);
             dummy_color.push_back(0);
 
-            double t_test = objects[j]->intersect(light_ray, dummy_color, 0, j);
+            double t_test = objects[j]->intersect(light_ray, dummy_color, 0);
             dummy_color.clear();
 
             if (t_test < LR_length) {
@@ -364,7 +364,7 @@ public:
         }
     }
 
-    virtual double intersect(Ray &r, vector<double> &final_color, int level, int self_index) {
+    virtual double intersect(Ray &r, vector<double> &final_color, int level) {
 
         Vector3D R_start = {r.start.x - reference_point.x, r.start.y - reference_point.y,
                             r.start.z - reference_point.z};
@@ -435,7 +435,7 @@ public:
             dummy_color_reflection.push_back(0);
             dummy_color_reflection.push_back(0);
 
-            t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0, obj_indx);
+            t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0);
             dummy_color_reflection.clear();
 
             if (t_reflection < t_min_reflection) {
@@ -453,8 +453,7 @@ public:
         // if we find a nearest one
         if (nearest_reflection != -1) {
 
-            double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1,
-                                                                 nearest_reflection);
+            double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1);
 
             final_color[0] += reflected_color[0] * coefficients[3];
             final_color[1] += reflected_color[1] * coefficients[3];
@@ -504,7 +503,7 @@ public:
         glEnd();
     }
 
-    virtual double intersect(Ray &r, vector<double> &final_color, int level, int self_index) {
+    virtual double intersect(Ray &r, vector<double> &final_color, int level) {
 
         double beta, gamma, t, A, D1, D2, D3, x_o, y_o, z_o, x_d, y_d, z_d;
 
@@ -579,7 +578,7 @@ public:
                 dummy_color_reflection.push_back(0);
                 dummy_color_reflection.push_back(0);
 
-                t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0, obj_indx);
+                t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0);
                 dummy_color_reflection.clear();
 
                 if (t_reflection < t_min_reflection) {
@@ -597,8 +596,7 @@ public:
             // if we find a nearest one
             if (nearest_reflection != -1) {
 
-                double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1,
-                                                                     nearest_reflection);
+                double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1);
 
                 final_color[0] += reflected_color[0] * coefficients[3];
                 final_color[1] += reflected_color[1] * coefficients[3];
@@ -683,7 +681,7 @@ public:
     }
 
 
-    virtual double intersect(Ray &r, vector<double> &final_color, int level, int self_index) {
+    virtual double intersect(Ray &r, vector<double> &final_color, int level) {
 
         double x_o, y_o, z_o, x_d, y_d, z_d;
 
@@ -770,7 +768,7 @@ public:
                 dummy_color_reflection.push_back(0);
                 dummy_color_reflection.push_back(0);
 
-                t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0, obj_indx);
+                t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0);
                 dummy_color_reflection.clear();
 
                 if (t_reflection < t_min_reflection) {
@@ -789,8 +787,7 @@ public:
             // if we find a nearest one
             if (nearest_reflection != -1) {
 
-                double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1,
-                                                                     nearest_reflection);
+                double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1);
 
                 final_color[0] += reflected_color[0] * coefficients[3];
                 final_color[1] += reflected_color[1] * coefficients[3];
@@ -838,7 +835,7 @@ public:
                 dummy_color_reflection.push_back(0);
                 dummy_color_reflection.push_back(0);
 
-                t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0, obj_indx);
+                t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0);
                 dummy_color_reflection.clear();
 
                 if (t_reflection < t_min_reflection) {
@@ -857,8 +854,7 @@ public:
             // if we find a nearest one
             if (nearest_reflection != -1) {
 
-                double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1,
-                                                                     nearest_reflection);
+                double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1);
 
                 final_color[0] += reflected_color[0] * coefficients[3];
                 final_color[1] += reflected_color[1] * coefficients[3];
@@ -948,7 +944,7 @@ public:
     }
 
 
-    virtual double intersect(Ray &r, vector<double> &final_color, int level, int self_index) {
+    virtual double intersect(Ray &r, vector<double> &final_color, int level) {
 
         Vector3D normal = {0, 0, 1};
 
@@ -1015,7 +1011,7 @@ public:
                 dummy_color_reflection.push_back(0);
                 dummy_color_reflection.push_back(0);
 
-                t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0, obj_indx);
+                t_reflection = objects[obj_indx]->intersect(reflected_ray, dummy_color_reflection, 0);
                 dummy_color_reflection.clear();
 
                 if (t_reflection < t_min_reflection) {
@@ -1034,8 +1030,7 @@ public:
             // if we find a nearest one
             if (nearest_reflection != -1) {
 
-                double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1,
-                                                                     nearest_reflection);
+                double temp = objects[nearest_reflection]->intersect(reflected_ray, reflected_color, level + 1);
 
                 final_color[0] += reflected_color[0] * coefficients[3];
                 final_color[1] += reflected_color[1] * coefficients[3];
